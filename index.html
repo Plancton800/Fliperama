@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fliperama de Bolso</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,6 +293,7 @@ kbd.ar { font-family: "Segoe UI Symbol", system-ui, sans-serif; font-size: 12px;
 }
 .slot iframe { position: relative; flex: 1; width: 100%; border: 0; opacity: 0; transition: opacity 0.2s; }
 .slot iframe.ready { opacity: 1; }
+.slot.loaded::before { display: none; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {
@@ -313,6 +318,8 @@ kbd.ar { font-family: "Segoe UI Symbol", system-ui, sans-serif; font-size: 12px;
     .cart:hover { transform: none; }
 }
 </style>
+</head>
+<body>
 
 <div class="page">
     <header class="marquee">
@@ -325,7 +332,7 @@ kbd.ar { font-family: "Segoe UI Symbol", system-ui, sans-serif; font-size: 12px;
 
     <main class="shelf" aria-label="Jogos">
         <article class="cart capivara">
-            <a class="screen" href="capivara-crossing.html" data-play="capivara" tabindex="-1" aria-hidden="true">
+            <a class="screen" href="Capivara%20Crossing_v2.html" data-play="capivara" tabindex="-1" aria-hidden="true">
                 <span class="tube"><canvas width="192" height="120" data-scene="capivara"></canvas></span>
             </a>
             <div class="info">
@@ -340,13 +347,13 @@ kbd.ar { font-family: "Segoe UI Symbol", system-ui, sans-serif; font-size: 12px;
                 <p class="keys"><kbd class="ar">↑</kbd><kbd class="ar">↓</kbd><kbd class="ar">←</kbd><kbd class="ar">→</kbd> pulam · no celular, toque ou deslize</p>
                 <div class="foot">
                     <div class="record"><span class="lbl">SEU RECORDE</span><output id="rec-capivara" class="none">SEM RECORDE AINDA</output></div>
-                    <a class="play" href="capivara-crossing.html" data-play="capivara" data-name="Capivara Crossing">JOGAR</a>
+                    <a class="play" href="Capivara%20Crossing_v2.html" data-play="capivara" data-name="Capivara Crossing">JOGAR</a>
                 </div>
             </div>
         </article>
 
         <article class="cart ladrao">
-            <a class="screen" href="pega-ladrao.html" data-play="pega-ladrao" tabindex="-1" aria-hidden="true">
+            <a class="screen" href="Pega%20Ladr%C3%A3o.html" data-play="pega-ladrao" tabindex="-1" aria-hidden="true">
                 <span class="tube"><canvas width="192" height="120" data-scene="pega-ladrao"></canvas></span>
             </a>
             <div class="info">
@@ -361,7 +368,7 @@ kbd.ar { font-family: "Segoe UI Symbol", system-ui, sans-serif; font-size: 12px;
                 <p class="keys"><kbd class="ar">←</kbd><kbd class="ar">→</kbd> correm · <kbd class="ar">↑</kbd><kbd class="ar">↓</kbd> escadas e elevador · <kbd>ESPAÇO</kbd> pula</p>
                 <div class="foot">
                     <div class="record"><span class="lbl">SEU RECORDE</span><output id="rec-pega-ladrao" class="none">SEM RECORDE AINDA</output></div>
-                    <a class="play" href="pega-ladrao.html" data-play="pega-ladrao" data-name="Pega Ladrão">JOGAR</a>
+                    <a class="play" href="Pega%20Ladr%C3%A3o.html" data-play="pega-ladrao" data-name="Pega Ladrão">JOGAR</a>
                 </div>
             </div>
         </article>
@@ -1497,6 +1504,7 @@ function focusGame() {
     } catch (e) { /* focus is best effort */ }
 }
 function clearSlot() {
+    slot.classList.remove('loaded');
     for (const frame of slot.querySelectorAll('iframe')) {
         frame.src = 'about:blank';
         frame.remove();
@@ -1510,10 +1518,10 @@ function openGame(id, push) {
     const frame = document.createElement('iframe');
     frame.title = link.dataset.name;
     frame.allow = 'fullscreen; autoplay; screen-wake-lock';
-    frame.allowFullscreen = true;
     frame.src = link.getAttribute('href');
     frame.addEventListener('load', () => {
         frame.classList.add('ready');
+        slot.classList.add('loaded');
         focusGame();
     });
     slot.appendChild(frame);
@@ -1590,5 +1598,5 @@ const firstGame = location.hash.slice(1);
 if (linkFor(firstGame)) { openGame(firstGame, false); }
 })();
 </script>
-
-</body></html>
+</body>
+</html>
