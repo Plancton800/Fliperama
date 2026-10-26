@@ -20,6 +20,10 @@ Quatro jogos em pixel art com sotaque brasileiro. Rodam direto no navegador, no 
 
 Em qualquer jogo, `P` pausa e `M` liga ou desliga o som. Os recordes ficam salvos no navegador.
 
+## Instalar no celular
+
+O Fliperama é um app web (PWA). No Android, abra o endereço acima no Chrome e toque em **⋮ → Instalar app**. Ele ganha um ícone na tela inicial, abre em tela cheia e funciona sem internet depois que cada jogo for aberto uma vez com conexão.
+
 ## Rodar no computador
 
 Baixe os arquivos e abra o `index.html` no navegador.
