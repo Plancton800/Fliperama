@@ -1,0 +1,2200 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radical Racing GT</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+/* Layout: one arcade cabinet column. Screen on top, LED dashboard and forecast strip under it,
+   then the cartridge manual. Touch pads float at the bottom corners on phones. Single dark look by design. */
+:root {
+    --bg: #100e1c;
+    --bg-2: #1a1530;
+    --bezel: #1d1a30;
+    --bezel-hi: #2c2748;
+    --panel: #0b0a14;
+    --panel-hi: #15122a;
+    --amber: #ffb43a;
+    --amber-glow: rgba(255, 180, 58, 0.45);
+    --ice: #8fdcff;
+    --red: #ff4b3e;
+    --ok: #5fd068;
+    --warn: #ffb43a;
+    --bad: #ff5a4a;
+    --text: #ece8ff;
+    --muted: #9a93c0;
+    --line: #2f2a4d;
+    --logo-1: #fff3b0;
+    --logo-2: #ffb43a;
+    --logo-3: #ff5a3c;
+    --logo-shadow: #3a1030;
+    --font-pixel: "Press Start 2P", ui-monospace, "Courier New", monospace;
+    --font-crt: "VT323", ui-monospace, "Courier New", monospace;
+    color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+    margin: 0;
+    background: linear-gradient(180deg, var(--bg-2), var(--bg) 60%);
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-crt);
+    font-size: 20px;
+    line-height: 1.25;
+    font-variant-ligatures: none;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 14px 32px;
+    overflow-x: hidden;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--ice); outline-offset: 2px; }
+
+#stage { display: flex; justify-content: center; }
+#stage:fullscreen { background: var(--bg); align-items: center; padding: 12px; }
+
+.cab {
+    width: min(100%, 1080px, calc((100vh - 48px) / 0.9));
+    width: min(100%, 1080px, calc((100dvh - 48px) / 0.9));
+    container-type: inline-size;
+    background: linear-gradient(180deg, var(--bezel-hi), var(--bezel));
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 0 0 2px var(--line), 0 18px 40px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.marquee { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px; }
+.marquee h1 {
+    margin: 0;
+    font-family: var(--font-pixel);
+    font-size: max(9px, 1.5cqw);
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    font-weight: 400;
+}
+.marquee h1 span { color: var(--red); }
+.tools { display: flex; gap: 6px; }
+.tool {
+    font-family: var(--font-pixel);
+    font-size: max(8px, 0.95cqw);
+    letter-spacing: 0.08em;
+    background: var(--panel-hi);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+.tool:hover { color: var(--text); border-color: var(--muted); }
+.tool[aria-pressed="true"] { color: var(--red); }
+
+.screen {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    width: 100%;
+    background: var(--panel);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 0 0 3px var(--panel), 0 0 0 4px var(--line);
+}
+.screen canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+.screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, transparent 0, transparent 60%, rgba(0, 0, 0, 0.16) 60%, rgba(0, 0, 0, 0.16) 100%);
+    background-size: 100% calc(100% / 200);
+}
+
+.banner {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 15%;
+    display: grid;
+    justify-items: center;
+    gap: 1.2cqw;
+    padding: 1.6cqw 4%;
+    background: linear-gradient(90deg, transparent, rgba(8, 6, 20, 0.72) 20%, rgba(8, 6, 20, 0.72) 80%, transparent);
+    text-align: center;
+    pointer-events: none;
+    z-index: 2;
+}
+.banner b {
+    font-family: var(--font-pixel);
+    font-weight: 400;
+    font-size: max(12px, 3cqw);
+    color: var(--logo-1);
+    filter: drop-shadow(0 0.3cqw 0 var(--logo-shadow));
+    letter-spacing: 0.06em;
+}
+.banner span {
+    font-family: var(--font-pixel);
+    font-size: max(7px, 1.25cqw);
+    color: var(--ice);
+    letter-spacing: 0.06em;
+    line-height: 1.6;
+}
+.banner.show { animation: banner-in 0.35s steps(5) both; }
+@keyframes banner-in { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 3cqw;
+    background: radial-gradient(ellipse at center, rgba(8, 6, 20, 0.35), rgba(8, 6, 20, 0.82));
+    z-index: 3;
+    text-align: center;
+}
+.panel { display: grid; justify-items: center; gap: 1.6cqw; max-width: 90%; }
+.logo {
+    margin: 0;
+    font-family: var(--font-pixel);
+    font-weight: 400;
+    line-height: 1.15;
+    font-size: max(18px, 5.6cqw);
+    letter-spacing: 0.04em;
+    background: linear-gradient(180deg, var(--logo-1) 0 34%, var(--logo-2) 34% 64%, var(--logo-3) 64% 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0.45cqw 0 var(--logo-shadow));
+    text-wrap: balance;
+}
+.logo small { display: block; font-size: 0.5em; letter-spacing: 0.3em; margin-bottom: 0.4em; }
+.tagline {
+    margin: 0;
+    font-family: var(--font-pixel);
+    font-size: max(7px, 1.2cqw);
+    letter-spacing: 0.14em;
+    color: var(--ice);
+}
+.panel p { margin: 0; }
+.panel .note { font-family: var(--font-pixel); font-size: max(7px, 1.05cqw); color: var(--muted); letter-spacing: 0.08em; }
+.btn {
+    font-family: var(--font-pixel);
+    font-size: max(10px, 1.7cqw);
+    letter-spacing: 0.1em;
+    background: var(--amber);
+    color: var(--panel);
+    border: 0;
+    border-radius: 4px;
+    padding: 1.3cqw 3cqw;
+    box-shadow: 0 0.5cqw 0 var(--logo-3);
+    cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: translateY(0.4cqw); box-shadow: 0 0.1cqw 0 var(--logo-3); }
+.stats { display: flex; gap: 3cqw; justify-content: center; flex-wrap: wrap; }
+.stats div { display: grid; gap: 0.6cqw; }
+.stats b { font-family: var(--font-pixel); font-weight: 400; font-size: max(12px, 2.6cqw); color: var(--amber); }
+.stats span { font-family: var(--font-pixel); font-size: max(7px, 1cqw); color: var(--muted); letter-spacing: 0.08em; }
+
+.dash {
+    display: grid;
+    grid-template-columns: 1.05fr 0.9fr 0.95fr 1.6fr;
+    gap: 6px;
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 6px;
+}
+.cell {
+    background: var(--panel-hi);
+    border-radius: 4px;
+    padding: 0.8cqw 1cqw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.6cqw;
+    min-width: 0;
+}
+.lbl {
+    font-family: var(--font-pixel);
+    font-size: max(7px, 0.95cqw);
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+}
+.led {
+    font-family: var(--font-pixel);
+    font-size: max(11px, 2.2cqw);
+    color: var(--amber);
+    text-shadow: 0 0 6px var(--amber-glow);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.row { display: flex; align-items: center; justify-content: space-between; gap: 0.8cqw; }
+.bar { height: max(4px, 0.6cqw); background: var(--panel); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--amber); transform-origin: left; transform: scaleX(0); }
+.count { display: flex; align-items: center; gap: 0.8cqw; }
+.count svg { width: max(14px, 2.2cqw); height: auto; flex: none; }
+.count svg rect { fill: var(--amber); }
+#left[data-state="done"] .led { color: var(--ok); text-shadow: none; }
+#left[data-state="done"] svg rect { fill: var(--ok); }
+#left[data-state="warn"] .led { color: var(--bad); animation: blink 0.6s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+#gripbox[data-level="ok"] .bar i { background: var(--ok); }
+#gripbox[data-level="warn"] .bar i { background: var(--warn); }
+#gripbox[data-level="bad"] .bar i { background: var(--bad); }
+#gripbox[data-level="bad"] #grip { color: var(--bad); }
+#wname { color: var(--text); }
+#strip {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 312 / 11;
+    image-rendering: pixelated;
+    border-radius: 2px;
+    display: block;
+}
+@container (max-width: 560px) {
+    .dash { grid-template-columns: 1fr 1fr; }
+    .lbl { font-size: 8px; }
+    .led { font-size: 13px; }
+}
+
+.touch { display: none; }
+@media (pointer: coarse) {
+    body { padding-bottom: 150px; }
+    .touch {
+        display: flex;
+        justify-content: space-between;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 0 max(14px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
+        pointer-events: none;
+        z-index: 5;
+    }
+    .pad { display: flex; gap: 10px; pointer-events: auto; }
+    .pad button {
+        width: clamp(60px, 17vmin, 88px);
+        height: clamp(60px, 17vmin, 88px);
+        border-radius: 14px;
+        border: 2px solid var(--line);
+        background: rgba(21, 18, 42, 0.82);
+        color: var(--text);
+        font-family: var(--font-pixel);
+        font-size: 9px;
+        letter-spacing: 0.06em;
+        display: grid;
+        place-items: center;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .pad button svg { width: 40%; height: auto; fill: currentColor; }
+    .pad button.on { background: var(--amber); color: var(--panel); border-color: var(--amber); }
+    .pad .gas { color: var(--amber); }
+    .help-keys { display: none; }
+}
+
+.manual {
+    max-width: 1080px;
+    margin: 28px auto 0;
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 0.9fr;
+    gap: 28px;
+    color: var(--text);
+}
+.manual h2 {
+    margin: 0 0 12px;
+    font-family: var(--font-pixel);
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--amber);
+    text-wrap: balance;
+    line-height: 1.6;
+}
+.manual section { min-width: 0; }
+.manual ol, .manual ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.manual li::marker { color: var(--muted); }
+.manual p { margin: 0 0 8px; color: var(--muted); }
+.table-wrap { overflow-x: auto; }
+.manual table { border-collapse: collapse; width: 100%; font-size: 19px; }
+.manual th, .manual td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.manual th { font-family: var(--font-pixel); font-weight: 400; font-size: 8px; letter-spacing: 0.08em; color: var(--muted); padding-bottom: 8px; }
+.manual td.n { font-variant-numeric: tabular-nums; color: var(--amber); white-space: nowrap; }
+.manual td.bad { color: var(--bad); }
+.manual td.warn { color: var(--warn); }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; }
+kbd {
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    background: var(--panel-hi);
+    border: 1px solid var(--line);
+    border-bottom-width: 3px;
+    border-radius: 4px;
+    padding: 5px 7px;
+    color: var(--text);
+    white-space: nowrap;
+}
+@media (max-width: 860px) {
+    .manual { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .banner.show, #left[data-state="warn"] .led { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+    <main class="cab" id="cab">
+        <header class="marquee">
+            <h1>RADICAL RACING <span>GT</span></h1>
+            <div class="tools">
+                <button class="tool" id="btn-pause" type="button">PAUSA</button>
+                <button class="tool" id="btn-sound" type="button" aria-pressed="false">SOM</button>
+                <button class="tool" id="btn-full" type="button">TELA</button>
+            </div>
+        </header>
+
+        <div class="screen" id="screen">
+            <canvas id="screen-canvas" width="320" height="200" aria-label="Pista da corrida"></canvas>
+            <div class="banner" id="banner" hidden><b id="banner-t"></b><span id="banner-s"></span></div>
+
+            <section class="overlay" id="title-ov" aria-label="Início">
+                <div class="panel">
+                    <h2 class="logo"><small>RESISTÊNCIA 16-BIT</small>RADICAL<br>RACING GT</h2>
+                    <p class="tagline">UM DIA DE CORRIDA, SETE CLIMAS, NENHUMA LINHA DE CHEGADA</p>
+                    <button class="btn" id="btn-start" type="button">CORRER</button>
+                    <p class="note"><span class="help-keys">ENTER PARA COMEÇAR · </span><span id="title-best">SEM RECORDE AINDA</span></p>
+                </div>
+            </section>
+
+            <section class="overlay" id="pause-ov" aria-label="Pausa" hidden>
+                <div class="panel">
+                    <h2 class="logo">PAUSA</h2>
+                    <button class="btn" id="btn-resume" type="button">CONTINUAR</button>
+                    <p class="note help-keys">P OU ESC PARA VOLTAR</p>
+                </div>
+            </section>
+
+            <section class="overlay" id="over-ov" aria-label="Fim de jogo" hidden>
+                <div class="panel">
+                    <h2 class="logo">FIM DA LINHA</h2>
+                    <p class="tagline" id="over-msg"></p>
+                    <div class="stats">
+                        <div><b id="over-days">0</b><span>DIAS COMPLETOS</span></div>
+                        <div><b id="over-cars">0</b><span>CARROS PASSADOS</span></div>
+                        <div><b id="over-km">0</b><span>KM RODADOS</span></div>
+                    </div>
+                    <button class="btn" id="btn-again" type="button">CORRER DE NOVO</button>
+                    <p class="note" id="over-best"></p>
+                </div>
+            </section>
+        </div>
+
+        <div class="dash">
+            <div class="cell">
+                <span class="lbl">ODÔMETRO KM</span>
+                <output class="led" id="odo">00000.0</output>
+            </div>
+            <div class="cell" id="left" data-state="run">
+                <span class="lbl">DIA <span id="day-n">1</span> · FALTAM</span>
+                <div class="count">
+                    <svg viewBox="0 0 8 6" aria-hidden="true">
+                        <rect x="2" y="0" width="4" height="2"/><rect x="0" y="2" width="8" height="2"/><rect x="0" y="4" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/>
+                    </svg>
+                    <output class="led" id="left-n">100</output>
+                </div>
+            </div>
+            <div class="cell">
+                <div class="row"><span class="lbl">KM/H</span><output class="led" id="speed">000</output></div>
+                <div class="bar"><i id="speedbar"></i></div>
+            </div>
+            <div class="cell" id="gripbox" data-level="ok">
+                <span class="lbl" id="wname">MANHÃ · CÉU LIMPO</span>
+                <div class="row"><span class="lbl" id="grip-l">ADERÊNCIA</span><output class="led" id="grip">100%</output></div>
+                <div class="bar"><i id="gripbar"></i></div>
+            </div>
+            <canvas id="strip" width="312" height="11" aria-label="Previsão do tempo para o dia"></canvas>
+        </div>
+    </main>
+</div>
+
+<div class="touch" id="touch">
+    <div class="pad">
+        <button type="button" data-key="left" aria-label="Esquerda"><svg viewBox="0 0 10 10"><path d="M7 1 2 5l5 4z"/></svg></button>
+        <button type="button" data-key="right" aria-label="Direita"><svg viewBox="0 0 10 10"><path d="M3 1l5 4-5 4z"/></svg></button>
+    </div>
+    <div class="pad">
+        <button type="button" data-key="brake">FREIO</button>
+        <button type="button" data-key="gas" class="gas">ACEL</button>
+    </div>
+</div>
+
+<div class="manual">
+    <section>
+        <h2>A CORRIDA</h2>
+        <ol>
+            <li>Cada dia tem uma meta de carros. Passe todos antes do fim da aurora.</li>
+            <li>Carro que te ultrapassa volta para a conta.</li>
+            <li>Bateu na traseira de alguém? Você perde quase toda a velocidade.</li>
+            <li>A meta sobe 30 carros por dia. O tráfego fica mais rápido e denso, as curvas fecham e os carros trocam mais de faixa.</li>
+            <li>A faixa colorida sob o painel é a previsão do dia: um ícone por período.</li>
+        </ol>
+    </section>
+    <section>
+        <h2>O CLIMA MUDA A FÍSICA</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>CLIMA</th><th>ADERÊNCIA</th><th>MÁX.</th><th>FREIO</th><th>O QUE MUDA</th></tr></thead>
+                <tbody>
+                    <tr><td>Céu limpo</td><td class="n">100%</td><td class="n">260 km/h</td><td class="n">100%</td><td>Carro responde na hora.</td></tr>
+                    <tr><td>Chuva</td><td class="n warn">70%</td><td class="n">239 km/h</td><td class="n">65%</td><td>A traseira escapa nas curvas. A pista seca devagar.</td></tr>
+                    <tr><td>Tempestade</td><td class="n warn">70%</td><td class="n">239 km/h</td><td class="n">65%</td><td>Aquaplanagem acima de 200 km/h, raios e vento.</td></tr>
+                    <tr><td>Neve</td><td class="n bad">48%</td><td class="n">208 km/h</td><td class="n">45%</td><td>O carro desliza. O gelo fica na pista depois que a neve para.</td></tr>
+                    <tr><td>Nevasca</td><td class="n bad">48%</td><td class="n">208 km/h</td><td class="n">45%</td><td>Rajadas de vento lateral e visão curta.</td></tr>
+                    <tr><td>Neblina</td><td class="n">100%</td><td class="n">260 km/h</td><td class="n">100%</td><td>Você enxerga uns 70 m à frente.</td></tr>
+                    <tr><td>Noite</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td>Só faróis e lanternas. Os outros carros viram dois pontos vermelhos.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section>
+        <h2>COMANDOS</h2>
+        <div class="keys">
+            <span><kbd>←</kbd> <kbd>→</kbd></span><span>Dirigir</span>
+            <span><kbd>↑</kbd> <kbd>Z</kbd></span><span>Acelerar</span>
+            <span><kbd>↓</kbd> <kbd>X</kbd></span><span>Frear</span>
+            <span><kbd>P</kbd></span><span>Pausa</span>
+            <span><kbd>M</kbd></span><span>Som</span>
+            <span><kbd>F</kbd></span><span>Tela cheia</span>
+        </div>
+        <p style="margin-top:12px">No celular, use os botões nos cantos da tela.</p>
+    </section>
+</div>
+
+<script>
+'use strict';
+// World: road geometry, time-of-day palettes, the day schedule and the weather model.
+// Everything here is a shared global used by sprites.js, render.js and game.js.
+
+const W = 320, H = 200;
+const SEG = 200;                 // segment length (world units)
+const ROAD = 1000;               // half road width
+const RUMBLE = 3;                // segments per stripe
+const CAM_H = 1000;
+const CAM_DEPTH = 1 / Math.tan(50 * Math.PI / 180);
+const PLAYER_Z = CAM_H * CAM_DEPTH;
+const DRAW = 230;                // segments drawn ahead
+const HORIZON = 80;
+const PLAYER_Y = HORIZON + H / 2;
+const MAX_SPEED = SEG * 60;
+const LANES = [-0.64, 0, 0.64];
+const CAR_W = 0.4;               // car width in half-road units
+const CAR_LEN = 320;
+const RING = 1024;
+
+const rand = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeIn = (a, b, t) => a + (b - a) * t * t;
+const easeInOut = (a, b, t) => a + (b - a) * (0.5 - Math.cos(t * Math.PI) / 2);
+const approach = (v, t, d) => v < t ? Math.min(t, v + d) : Math.max(t, v - d);
+const pick = arr => arr[(Math.random() * arr.length) | 0];
+
+function hex(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+function scale3(a, f) { return [a[0] * f, a[1] * f, a[2] * f]; }
+function css(c, alpha) {
+    const r = clamp(c[0] | 0, 0, 255), g = clamp(c[1] | 0, 0, 255), b = clamp(c[2] | 0, 0, 255);
+    return alpha === undefined ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ---------- Endless road: sections are queued, then materialized into a ring buffer ----------
+const Road = {
+    ring: new Array(RING), queue: [], next: 0, lastY: 0, qy: 0, curveMax: 3,
+
+    reset() {
+        this.ring = new Array(RING);
+        this.queue = [];
+        this.next = 0;
+        this.lastY = 0;
+        this.qy = 0;
+        this.add(0, 60, 0, 0, 0);
+    },
+
+    seg(i) { return this.ring[i & (RING - 1)]; },
+
+    ensure(upTo) {
+        while (this.next <= upTo) {
+            if (!this.queue.length) this.plan();
+            this.make(this.queue.shift());
+        }
+    },
+
+    add(enter, hold, leave, curve, height) {
+        const y0 = this.qy, y1 = y0 + height * SEG, total = enter + hold + leave;
+        let n = 0;
+        const y = () => easeInOut(y0, y1, ++n / total);
+        for (let i = 0; i < enter; i++) this.queue.push({ curve: easeIn(0, curve, i / enter), y: y() });
+        for (let i = 0; i < hold; i++) this.queue.push({ curve, y: y() });
+        for (let i = 0; i < leave; i++) this.queue.push({ curve: easeInOut(curve, 0, i / leave), y: y() });
+        this.qy = y1;
+    },
+
+    plan() {
+        const c = this.curveMax;
+        const len = () => 25 + (rand(60) | 0);
+        const side = () => (Math.random() < 0.5 ? -1 : 1);
+        const hill = () => clamp(rand(-32, 32) - this.qy / SEG * 0.6, -45, 45);
+        const r = Math.random();
+        if (r < 0.2) this.add(10, len(), 10, 0, 0);
+        else if (r < 0.38) this.add(15, len(), 15, 0, hill());
+        else if (r < 0.62) this.add(20, len(), 20, side() * rand(c * 0.4, c), 0);
+        else if (r < 0.8) {
+            const s = side(), k = rand(c * 0.4, c * 0.8);
+            this.add(15, 20, 15, s * k, 0);
+            this.add(15, 20, 15, -s * k, 0);
+        } else this.add(20, len(), 20, side() * rand(c * 0.5, c), hill());
+    },
+
+    make(spec) {
+        const i = this.next++;
+        const s = {
+            index: i, curve: spec.curve, y1: this.lastY, y2: spec.y,
+            stripe: Math.floor(i / RUMBLE) % 2, sprites: [],
+            p1: { sx: 0, sy: 0, sw: 0, scale: 0 }, p2: { sx: 0, sy: 0, sw: 0, scale: 0 },
+            n: 0, clip: 0, fog: 0, hl: 0, front: false, carFrame: -1, cars: null,
+        };
+        this.lastY = spec.y;
+        this.decorate(s);
+        this.ring[i & (RING - 1)] = s;
+    },
+
+    decorate(s) {
+        const i = s.index;
+        if (i < 14) return;
+        if (i % 16 === 0) s.sprites.push({ t: 'post', x: -1.22 }, { t: 'post', x: 1.22 });
+        if (Math.abs(s.curve) > 2.2 && i % 8 === 0) {
+            s.sprites.push(s.curve > 0 ? { t: 'chevR', x: -1.45 } : { t: 'chevL', x: 1.45 });
+        }
+        const forest = Math.floor(i / 700) % 2 === 0;
+        for (const side of [-1, 1]) {
+            if (Math.random() < (forest ? 0.42 : 0.2)) {
+                const t = forest ? (Math.random() < 0.8 ? 'pine' : 'bush') : pick(['tree', 'tree', 'bush', 'pine']);
+                s.sprites.push({ t, x: side * rand(1.75, forest ? 4.6 : 6.5) });
+            }
+        }
+    },
+};
+
+// ---------- Palettes per time of day ----------
+const PALETTES = {
+    morning:   { skyTop: '#3a74d6', skyBot: '#f5c9a0', far: '#8099c9', near: '#3c7547', grassA: '#47a13d', grassB: '#3e9236', roadA: '#6d6d77', roadB: '#676771', rumA: '#ececf0', rumB: '#d23535', lane: '#f2f2f2', fog: '#cbd8ea', cloud: '#fff3ea', sun: '#fff1b8', light: 1, sunX: 0.22, sunY: 0.7, sunR: 9 },
+    noon:      { skyTop: '#2058d0', skyBot: '#8fc6ff', far: '#7f9fd6', near: '#357f44', grassA: '#4aac40', grassB: '#419c39', roadA: '#72727c', roadB: '#6c6c76', rumA: '#f4f4f4', rumB: '#d83a3a', lane: '#f6f6f6', fog: '#c8def6', cloud: '#ffffff', sun: '#ffffe0', light: 1, sunX: 0.5, sunY: 0.18, sunR: 8 },
+    afternoon: { skyTop: '#2d5cb8', skyBot: '#ffd58c', far: '#8d8db6', near: '#4b7a3c', grassA: '#529c37', grassB: '#488e32', roadA: '#6f6c72', roadB: '#69666c', rumA: '#f0ece4', rumB: '#d23a2e', lane: '#f4f0e6', fog: '#ead7ae', cloud: '#fff0d0', sun: '#fff0a0', light: 0.95, sunX: 0.78, sunY: 0.55, sunR: 9 },
+    sunset:    { skyTop: '#34246e', skyBot: '#ff8248', far: '#6c4878', near: '#36334a', grassA: '#3c6634', grassB: '#345c2f', roadA: '#5a5262', roadB: '#554e5e', rumA: '#e8d8d0', rumB: '#c03030', lane: '#f0d8c8', fog: '#e48a68', cloud: '#ffb088', sun: '#ffcf60', light: 0.72, sunX: 0.62, sunY: 0.92, sunR: 14 },
+    night:     { skyTop: '#040716', skyBot: '#131a3c', far: '#121732', near: '#0a0f1c', grassA: '#0f1c16', grassB: '#0d1813', roadA: '#1e1e27', roadB: '#1b1b24', rumA: '#45454f', rumB: '#4a1c1c', lane: '#5a5a64', fog: '#121834', cloud: '#1c2240', sun: '#e8ecff', light: 0.12, stars: 1, sunX: 0.3, sunY: 0.25, sunR: 7, moon: 1 },
+    latenight: { skyTop: '#02030c', skyBot: '#0b1230', far: '#0c1028', near: '#070b16', grassA: '#0b1611', grassB: '#09130f', roadA: '#191920', roadB: '#17171e', rumA: '#3a3a44', rumB: '#3e1818', lane: '#4c4c56', fog: '#0d1230', cloud: '#161a34', sun: '#d8dcf8', light: 0.08, stars: 1, sunX: 0.7, sunY: 0.3, sunR: 7, moon: 1 },
+    dawn:      { skyTop: '#283a7c', skyBot: '#f2a0a6', far: '#5e5e8e', near: '#2e4a40', grassA: '#33683a', grassB: '#2d5f34', roadA: '#56565f', roadB: '#51515a', rumA: '#dcdce4', rumB: '#b83434', lane: '#e4e4ea', fog: '#c8a8c4', cloud: '#f8c8cc', sun: '#ffd8a0', light: 0.58, stars: 0.3, sunX: 0.18, sunY: 0.95, sunR: 12 },
+};
+const COLOR_KEYS = ['skyTop', 'skyBot', 'far', 'near', 'grassA', 'grassB', 'roadA', 'roadB', 'rumA', 'rumB', 'lane', 'fog', 'cloud', 'sun'];
+const NUM_KEYS = ['light', 'stars', 'sunX', 'sunY', 'sunR', 'moon'];
+const LIT_KEYS = ['grassA', 'grassB', 'roadA', 'roadB', 'rumA', 'rumB', 'lane', 'track'];
+const PAL = {};
+
+function initPalettes() {
+    for (const k in PALETTES) {
+        const s = PALETTES[k], p = {};
+        for (const c of COLOR_KEYS) p[c] = hex(s[c]);
+        for (const n of NUM_KEYS) p[n] = s[n] || 0;
+        PAL[k] = p;
+    }
+}
+
+// Applies wet road, snow cover, overcast sky and fog to a palette (replaces arrays, never mutates shared ones).
+function weatherize(p, e) {
+    const L = p.light;
+    const over = clamp(e.rain * 0.85 + e.snow * 0.6 + e.fog * 0.75, 0, 1);
+    const grey = scale3([132, 140, 154], 0.2 + 0.8 * L);
+    p.skyTop = mix(p.skyTop, scale3(grey, 0.82), over);
+    p.skyBot = mix(p.skyBot, grey, over);
+    p.cloud = mix(p.cloud, scale3(grey, 1.12), over * 0.7);
+    p.fog = mix(p.fog, scale3([198, 204, 214], 0.16 + 0.84 * L), clamp(e.fog + e.rain * 0.6 + e.snow * 0.6, 0, 1));
+    p.sunVis = 1 - over * 0.95;
+    p.ambient = L * (1 - 0.3 * over);
+    p.over = over;
+
+    const gr = 1 - 0.18 * e.wet;
+    p.grassA = scale3(p.grassA, gr);
+    p.grassB = scale3(p.grassB, gr);
+    p.roadA = mix(p.roadA, scale3(p.roadA, 0.66), e.wet);
+    p.roadB = mix(p.roadB, scale3(p.roadB, 0.66), e.wet);
+
+    const snowA = mix([30, 38, 62], [236, 242, 250], L), snowB = scale3(snowA, 0.92);
+    p.grassA = mix(p.grassA, snowA, e.cover);
+    p.grassB = mix(p.grassB, snowB, e.cover);
+    const packed = mix([44, 48, 62], [170, 176, 192], L);
+    p.roadA = mix(p.roadA, packed, e.cover * 0.8);
+    p.roadB = mix(p.roadB, scale3(packed, 0.96), e.cover * 0.8);
+    p.track = scale3(p.roadA, 0.68);
+    p.rumA = mix(p.rumA, snowA, e.cover * 0.5);
+    p.rumB = mix(p.rumB, snowA, e.cover * 0.5);
+    p.far = mix(p.far, mix(p.far, snowA, 0.6), e.cover);
+    p.near = mix(p.near, scale3(snowA, 0.86), e.cover * 0.85);
+    p.fogD = 0.0024 + e.fog * 0.024 + e.rain * 0.004 + e.snow * 0.007;
+    return p;
+}
+
+function blendPalette(a, b, t, e) {
+    const p = {};
+    for (const c of COLOR_KEYS) p[c] = mix(a[c], b[c], t);
+    for (const n of NUM_KEYS) p[n] = lerp(a[n], b[n], t);
+    weatherize(p, e);
+    p.lit = null;
+    if (p.light < 0.9) {
+        // Headlights: near segments are lit toward a dimmed noon palette under the same weather.
+        const lit = weatherize(Object.assign({}, PAL.noon), e);
+        p.lit = {};
+        for (const c of LIT_KEYS) p.lit[c] = scale3(lit[c], 0.62);
+    }
+    return p;
+}
+
+// ---------- Day schedule and weather ----------
+const TIMES = [
+    { name: 'MANHÃ', dur: 22, pal: 'morning', night: false },
+    { name: 'MEIO-DIA', dur: 22, pal: 'noon', night: false },
+    { name: 'TARDE', dur: 22, pal: 'afternoon', night: false },
+    { name: 'PÔR DO SOL', dur: 20, pal: 'sunset', night: false },
+    { name: 'NOITE', dur: 26, pal: 'night', night: true },
+    { name: 'MADRUGADA', dur: 24, pal: 'latenight', night: true },
+    { name: 'AURORA', dur: 20, pal: 'dawn', night: false },
+];
+const DAY_LEN = TIMES.reduce((s, t) => s + t.dur, 0);
+
+const WX_KEYS = ['rain', 'snow', 'fog', 'wind', 'storm'];
+const WEATHERS = {
+    clear:    { name: 'CÉU LIMPO',  tip: 'ADERÊNCIA TOTAL',                rain: 0,   snow: 0,    fog: 0,    wind: 0,    storm: 0, icon: 'sun' },
+    rain:     { name: 'CHUVA',      tip: 'PISTA MOLHADA: A TRASEIRA ESCAPA', rain: 0.7, snow: 0,    fog: 0.15, wind: 0.15, storm: 0, icon: 'rain' },
+    storm:    { name: 'TEMPESTADE', tip: 'AQUAPLANAGEM ACIMA DE 200 KM/H',  rain: 1,   snow: 0,    fog: 0.3,  wind: 0.45, storm: 1, icon: 'storm' },
+    snow:     { name: 'NEVE',       tip: 'GELO: FREIE CEDO E CURVE SUAVE',  rain: 0,   snow: 0.75, fog: 0.2,  wind: 0.2,  storm: 0, icon: 'snow' },
+    blizzard: { name: 'NEVASCA',    tip: 'VENTO LATERAL E POUCA VISÃO',     rain: 0,   snow: 1,    fog: 0.65, wind: 1,    storm: 0, icon: 'snow' },
+    fog:      { name: 'NEBLINA',    tip: 'VISIBILIDADE REDUZIDA',           rain: 0,   snow: 0,    fog: 1,    wind: 0,    storm: 0, icon: 'fog' },
+};
+
+function makeSchedule(day) {
+    if (day === 1) return ['clear', 'clear', 'snow', 'clear', 'clear', 'fog', 'clear'];
+    const pool = ['rain', 'snow', 'fog'];
+    if (day >= 3) pool.push('storm');
+    if (day >= 4) pool.push('blizzard');
+    const pBad = Math.min(0.8, 0.3 + 0.08 * day);
+    const s = TIMES.map(() => (Math.random() < pBad ? pick(pool) : 'clear'));
+    if (s.every(w => w === 'clear')) s[2] = pick(pool);
+    return s;
+}
+
+// Each day asks for more cars, with faster and denser traffic that changes lanes more often.
+function dayRules(day) {
+    const d = day - 1;
+    return {
+        quota: Math.min(400, 100 + 30 * d),
+        carFrac: Math.min(0.62, 0.4 + 0.025 * d),
+        gap: Math.max(1100, 2600 - 170 * d),
+        laneChange: Math.min(0.55, 0.08 + 0.06 * d),
+        curveMax: Math.min(6, 3 + 0.4 * d),
+    };
+}
+
+function phaseAt(t) {
+    let acc = 0;
+    for (let i = 0; i < TIMES.length; i++) {
+        if (t < acc + TIMES[i].dur) return { i, p: (t - acc) / TIMES[i].dur };
+        acc += TIMES[i].dur;
+    }
+    return { i: TIMES.length - 1, p: 1 };
+}
+
+const Env = {
+    rain: 0, snow: 0, fog: 0, wind: 0, storm: 0, wet: 0, cover: 0, pal: null,
+
+    reset(key) {
+        const t = WEATHERS[key || 'clear'];
+        for (const k of WX_KEYS) this[k] = t[k];
+        this.wet = t.rain > 0.15 ? 1 : 0;
+        this.cover = t.snow > 0.2 ? 1 : 0;
+    },
+
+    // Falling rain/snow ease in; the road stays wet or icy for a while after it stops.
+    update(dt, target) {
+        const k = Math.min(1, dt * 0.4);
+        for (const key of WX_KEYS) this[key] += (target[key] - this[key]) * k;
+        this.wet = approach(this.wet, this.rain > 0.15 ? 1 : 0, (this.rain > 0.15 ? 0.3 : 0.05) * dt);
+        this.cover = approach(this.cover, this.snow > 0.2 ? 1 : 0, (this.snow > 0.2 ? 0.14 : 0.05) * dt);
+    },
+
+    grip() { return clamp(1 - 0.3 * this.wet - 0.52 * this.cover, 0.3, 1); },
+    maxMul() { return 1 - 0.08 * this.wet - 0.2 * this.cover; },
+    accMul() { return 1 - 0.15 * this.wet - 0.4 * this.cover; },
+    brakeMul() { return 1 - 0.35 * this.wet - 0.55 * this.cover; },
+    trafficMul() { return 1 - 0.1 * this.wet - 0.25 * this.cover; },
+};
+
+</script>
+<script>
+'use strict';
+// Pixel-art sprites. Cars and trees are authored as left halves, mirrored, then doubled with
+// Scale2x so diagonals come out smooth, the way 16-bit sprites looked.
+
+const LIGHT_CHARS = { r: '#ff3b30', R: '#ffe2d2', y: '#ffc23a', Y: '#ffe066' };
+
+const MAPS = {
+    gt: [
+        '..........kkkkkk',
+        '.........kBBBBBB',
+        '.........kbbbbbb',
+        '........kgGGgggg',
+        '........kgGggggg',
+        '.kkkkkkkkkkkkkkk',
+        '.kWWWWWWWWWWWWWW',
+        '.kwwwwwwwwwwwwww',
+        '.kkkkkkkkkkkkkkk',
+        '.kBBBkdkBBBBBBBB',
+        'kbbbbbbbbbbbbbbb',
+        'kbrRRRrrbbbbbbbb',
+        'kbrrrrrrbbbbbbbb',
+        'kbbbbbbbbbbkpppp',
+        'kddddddddddkpppp',
+        'kkkkkkkkkkkkkkkk',
+        '.kttTTtkeekkkkkk',
+        '.kttTTtk........',
+        '..kkkkk.........',
+    ],
+    sedan: [
+        '........kkkkkkkk',
+        '.......kBBBBBBBB',
+        '......kgGGgggggg',
+        '.....kgGGggggggg',
+        '....kgGggggggggg',
+        '...kkkkkkkkkkkkk',
+        '..kBBBBBBBBBBBBB',
+        '.kbbbbbbbbbbbbbb',
+        'kbbbbbbbbbbbbbbb',
+        'kbrRRrbbbbbbbbbb',
+        'kbrrrrbbbbbbbbbb',
+        'kbbbbbbbbbbbkppp',
+        'kdddddddddddkppp',
+        'kkkkkkkkkkkkkkkk',
+        'kmmmmmmmmmmmmmmm',
+        'kkkkkkkkkkkkkkkk',
+        '.kttTtk.........',
+        '.kttTtk.........',
+        '..kkkk..........',
+    ],
+    van: [
+        '.kkkkkkkkkkkkkkk',
+        '.kBBBBBBBBBBBBBB',
+        '.kbbbbbbbbbbbbbd',
+        '.kbgggggggggggbd',
+        '.kbgGGggggggggbd',
+        '.kbgggggggggggbd',
+        '.kbbbbbbbbbbbbbd',
+        '.kbbbbbbbbbbbbbd',
+        '.kbbbbbbbbbbbmmd',
+        '.kbbbbbbbbbbbbbd',
+        '.kbbbbbbbbbbbbbd',
+        '.kbrRrbbbbbbbbbd',
+        '.kbrrrbbbbbbbbbd',
+        '.kbrrrbbbbbbbbbd',
+        '.kdddddddddddddd',
+        '.kkkkkkkkkkkkkkk',
+        '.kmmmmmmmmmmmmmm',
+        '.kkkkkkkkkkkkkkk',
+        '..kttTtk........',
+        '..kttTtk........',
+        '...kkkk.........',
+    ],
+    pine: [
+        '.......k',
+        '......kG',
+        '......kG',
+        '.....kGg',
+        '.....kGg',
+        '....kGgg',
+        '...kkkgg',
+        '....kGgg',
+        '...kGggg',
+        '...kGggg',
+        '..kGgggg',
+        '.kkkkggg',
+        '...kGggg',
+        '..kGgggg',
+        '..kGgggg',
+        '.kGggggg',
+        '.kGggggg',
+        'kGgggggg',
+        'kkkkkkkk',
+        '......uU',
+        '......uU',
+        '......uU',
+        '.....kkk',
+    ],
+    tree: [
+        '....kkkk',
+        '..kkGGGg',
+        '.kGGGggg',
+        '.kGGgggg',
+        'kGGggggg',
+        'kGgggggg',
+        'kGgggggn',
+        'kggggggn',
+        'kgggggnn',
+        '.kggnnnn',
+        '.kknnnnn',
+        '...kkkuU',
+        '......uU',
+        '......uU',
+        '......uU',
+        '......uU',
+        '.....kkk',
+    ],
+    bush: [
+        '..kkkk',
+        '.kGGgg',
+        'kGGggg',
+        'kGgggn',
+        'kggnnn',
+        'kkkkkk',
+    ],
+    post: [
+        'kk', 'ky', 'ky', 'kW', 'kW', 'kW', 'kW', 'kW', 'kW', 'kd', 'kd', 'kk',
+    ],
+};
+
+const CHEVRON = [
+    'kkkkkkkkkkkkkkkk',
+    'kbbbbbbbbbbbbbbk',
+    'kbYYbbbbYYbbbbbk',
+    'kbbYYbbbbYYbbbbk',
+    'kbbbYYbbbbYYbbbk',
+    'kbbbbYYbbbbYYbbk',
+    'kbbbYYbbbbYYbbbk',
+    'kbbYYbbbbYYbbbbk',
+    'kbYYbbbbYYbbbbbk',
+    'kbbbbbbbbbbbbbbk',
+    'kkkkkkkkkkkkkkkk',
+    '.......kk.......',
+    '.......kk.......',
+    '.......kk.......',
+    '.......kk.......',
+    '.......kk.......',
+];
+
+const ICONS = {
+    sun:   ['...y...', '.y.y.y.', '..yyy..', 'yyyyyyy', '..yyy..', '.y.y.y.', '...y...'],
+    moon:  ['..www..', '.ww....', 'ww.....', 'ww.....', 'ww.....', '.ww....', '..www..'],
+    rain:  ['..ccc..', '.ccccc.', 'ccccccc', '.......', 'b.b.b..', '.b.b.b.', 'b.b.b..'],
+    storm: ['..ccc..', '.ccccc.', 'ccccccc', '...yy..', '..yy...', '.yyyy..', '...y...'],
+    snow:  ['w..w..w', '.w.w.w.', '..www..', 'wwwwwww', '..www..', '.w.w.w.', 'w..w..w'],
+    fog:   ['.......', 'wwwww..', '.......', '..wwwww', '.......', 'wwwwww.', '.......'],
+};
+const ICON_PAL = { y: '#ffd23a', w: '#eef2ff', c: '#aab4c8', b: '#6fb6ff' };
+
+function canvas(w, h) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    return c;
+}
+
+function mirror(rows, shadeMap) {
+    return rows.map(r => r + [...r].reverse().map(c => (shadeMap && shadeMap[c]) || c).join(''));
+}
+
+function scale2x(rows) {
+    const h = rows.length, w = rows[0].length, out = [];
+    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? '.' : rows[y][x]);
+    for (let y = 0; y < h; y++) {
+        let top = '', bot = '';
+        for (let x = 0; x < w; x++) {
+            const P = rows[y][x], A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
+            top += (C === A && C !== D && A !== B ? A : P) + (A === B && A !== C && B !== D ? B : P);
+            bot += (D === C && D !== B && C !== A ? C : P) + (B === D && B !== A && D !== C ? D : P);
+        }
+        out.push(top, bot);
+    }
+    return out;
+}
+
+function build(rows, pal) {
+    const big = scale2x(rows), h = big.length, w = big[0].length;
+    const img = canvas(w, h), lights = canvas(w, h);
+    const a = img.getContext('2d'), b = lights.getContext('2d');
+    let hasLights = false;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const c = big[y][x];
+            if (c === '.') continue;
+            a.fillStyle = pal[c] || '#ff00ff';
+            a.fillRect(x, y, 1, 1);
+            if (LIGHT_CHARS[c]) {
+                b.fillStyle = LIGHT_CHARS[c];
+                b.fillRect(x, y, 1, 1);
+                hasLights = true;
+            }
+        }
+    }
+    return { img, lights: hasLights ? lights : null, w, h, dark: [] };
+}
+
+function tone(hexc, f) {
+    const c = hex(hexc);
+    return css(f >= 0 ? mix(c, [255, 255, 255], f) : scale3(c, 1 + f));
+}
+
+const CAR_BASE = {
+    k: '#120d18', g: '#1b2440', G: '#7a95c8', r: '#b81c1c', R: '#ff7a64', p: '#e6e4d4',
+    t: '#1d1d24', T: '#4c4c58', e: '#707080', m: '#c9cdd8', W: '#f2f2f4', w: '#a4a8b8',
+};
+
+function carPalette(body, stripedWing) {
+    const p = Object.assign({}, CAR_BASE, { B: tone(body, 0.32), b: body, d: tone(body, -0.42) });
+    if (!stripedWing) {
+        p.W = p.B;
+        p.w = p.d;
+    }
+    return p;
+}
+
+const SPR = { player: null, cars: [] };
+const TRAFFIC_COLORS = ['#2f6fe0', '#f2c230', '#3bb04c', '#e9e9ee', '#ff8c1e', '#9b4fe0', '#22bcc6', '#808090'];
+const MODELS = ['gt', 'sedan', 'sedan', 'van'];
+const PX = CAR_W / 32;                     // world units per authored pixel
+const SCENERY = { pine: 3.4, tree: 3.2, bush: 2.4, post: 1.7, chevR: 2.0, chevL: 2.0 };
+
+function initSprites() {
+    SPR.player = build(mirror(MAPS.gt), carPalette('#d8262a', true));
+    for (const m of ['gt', 'sedan', 'van']) {
+        for (const c of TRAFFIC_COLORS) SPR.cars.push({ model: m, spr: build(mirror(MAPS[m]), carPalette(c)) });
+    }
+    const leaf = { k: '#0d2a1a', G: '#5fb04a', g: '#2f7d3a', n: '#1c5a2c', u: '#7a4a26', U: '#4e2e18' };
+    const snowy = Object.assign({}, leaf, { G: '#f2f6ff', g: '#3c7650', n: '#24523a' });
+    const shade = { G: 'g', g: 'n', u: 'U' };
+    for (const t of ['pine', 'tree', 'bush']) {
+        SPR[t] = build(mirror(MAPS[t], shade), leaf);
+        SPR[t + '_snow'] = build(mirror(MAPS[t], shade), snowy);
+    }
+    SPR.post = build(mirror(MAPS.post), { k: '#1a1a1e', W: '#eeeeee', d: '#55555c', y: '#e8a020' });
+    const sign = { k: '#141418', b: '#1c2450', Y: '#ffd400' };
+    SPR.chevR = build(CHEVRON, sign);
+    SPR.chevL = build(CHEVRON.map(r => [...r].reverse().join('')), sign);
+}
+
+function randomCarSprite() {
+    const model = pick(MODELS);
+    return pick(SPR.cars.filter(c => c.model === model)).spr;
+}
+
+function scenerySprite(t, snowy) {
+    return (snowy && SPR[t + '_snow']) || SPR[t];
+}
+
+// Night versions are tinted copies, built on demand and cached per darkness level (0-7).
+function shaded(spr, level) {
+    if (level <= 0) return spr.img;
+    if (!spr.dark[level]) {
+        const c = canvas(spr.w, spr.h), x = c.getContext('2d');
+        x.drawImage(spr.img, 0, 0);
+        x.globalCompositeOperation = 'source-atop';
+        x.fillStyle = `rgba(4,6,20,${level / 8})`;
+        x.fillRect(0, 0, spr.w, spr.h);
+        spr.dark[level] = c;
+    }
+    return spr.dark[level];
+}
+
+function drawIcon(c, name, x, y) {
+    const rows = ICONS[name];
+    for (let j = 0; j < rows.length; j++) {
+        for (let i = 0; i < rows[j].length; i++) {
+            const ch = rows[j][i];
+            if (ch === '.') continue;
+            c.fillStyle = ICON_PAL[ch];
+            c.fillRect(x + i, y + j, 1, 1);
+        }
+    }
+}
+
+</script>
+<script>
+'use strict';
+// Renderer: banded sky, parallax mountains, scanline road, sprites far-to-near, weather particles.
+
+const cv = document.getElementById('screen-canvas');
+const ctx = cv.getContext('2d', { alpha: false });
+cv.width = W;
+cv.height = H;
+ctx.imageSmoothingEnabled = false;
+
+const BG_W = 640;
+const FAR = [], NEAR = [], STARS = [], CLOUDS = [];
+const RAIN = [], FLAKES = [], PUFFS = [];
+const wrapBG = v => ((Math.floor(v) % BG_W) + BG_W) % BG_W;
+let frameId = 0;
+
+function initBackground() {
+    for (let i = 0; i < BG_W; i++) {
+        const a = i / BG_W * Math.PI * 2;
+        FAR.push(Math.round(12 + 15 * Math.abs(Math.sin(a * 3 + 1)) + 8 * Math.abs(Math.sin(a * 8 + 2)) + 3 * Math.sin(a * 21)));
+        NEAR.push(Math.round(Math.max(2, 7 + 5 * Math.sin(a * 5 + 4) + 3 * Math.sin(a * 13 + 1) + 1.5 * Math.sin(a * 29))));
+    }
+    for (let i = 0; i < 70; i++) STARS.push({ x: rand(BG_W) | 0, y: rand(HORIZON - 12) | 0, b: rand(0.4, 1), p: rand(6.28) });
+    for (let i = 0; i < 8; i++) CLOUDS.push(makeCloud(i));
+    for (let i = 0; i < 170; i++) RAIN.push({ x: rand(W), y: rand(H), l: rand(4, 10), v: rand(240, 360) });
+    for (let i = 0; i < 200; i++) FLAKES.push({ x: rand(W), y: rand(H), s: Math.random() < 0.3 ? 2 : 1, v: rand(16, 40), p: rand(6.28) });
+}
+
+function makeCloud(i) {
+    const blobs = [];
+    let x = 0;
+    const n = 3 + (rand(3) | 0);
+    for (let k = 0; k < n; k++) {
+        const r = rand(4, 10);
+        blobs.push({ x: x + r, r });
+        x += r * 1.25;
+    }
+    const h = Math.ceil(Math.max(...blobs.map(b => b.r)));
+    const spans = [];
+    for (let y = 0; y < h; y++) {
+        let x0 = Infinity, x1 = -Infinity;
+        for (const b of blobs) {
+            if (y < b.r) {
+                const d = Math.sqrt(b.r * b.r - y * y);
+                x0 = Math.min(x0, b.x - d);
+                x1 = Math.max(x1, b.x + d);
+            }
+        }
+        spans.push([Math.round(x0), Math.round(x1)]);
+    }
+    return { x: i * BG_W / 8 + rand(40), y: rand(12, HORIZON - 26) | 0, spans, drift: rand(1.5, 4) };
+}
+
+function puff(x, y, vx, vy, life, size, color, a) {
+    if (PUFFS.length < 260) PUFFS.push({ x, y, vx, vy, life, max: life, size, color, a: a === undefined ? 0.6 : a });
+}
+
+function makeBolt() {
+    const pts = [];
+    let x = rand(40, W - 40), y = 0;
+    while (y < HORIZON - 12) {
+        pts.push([x, y]);
+        x += rand(-9, 9);
+        y += rand(4, 9);
+    }
+    pts.push([x, HORIZON - 12]);
+    return pts;
+}
+
+// ---------- Background ----------
+function disc(cx, cy, r, color) {
+    ctx.fillStyle = color;
+    for (let dy = -r; dy <= r; dy++) {
+        const dx = Math.floor(Math.sqrt(r * r - dy * dy));
+        ctx.fillRect(cx - dx, cy + dy, dx * 2 + 1, 1);
+    }
+}
+
+function drawSky(p, g) {
+    const bands = 12, bottom = HORIZON + 4;
+    for (let i = 0; i < bands; i++) {
+        const y0 = Math.round(i * bottom / bands), y1 = Math.round((i + 1) * bottom / bands);
+        ctx.fillStyle = css(mix(p.skyTop, p.skyBot, Math.pow(i / (bands - 1), 1.5)));
+        ctx.fillRect(0, y0, W, y1 - y0);
+    }
+    ctx.fillStyle = css(p.near);
+    ctx.fillRect(0, bottom, W, H - bottom);
+
+    const sa = p.stars * p.sunVis;
+    if (sa > 0.02) {
+        for (const s of STARS) {
+            const x = wrapBG(s.x - g.bgX * 0.15);
+            if (x >= W) continue;
+            const a = sa * s.b * (0.6 + 0.4 * Math.sin(g.t * 2 + s.p));
+            ctx.fillStyle = `rgba(255,255,255,${a.toFixed(2)})`;
+            ctx.fillRect(x, s.y, 1, 1);
+        }
+    }
+
+    const vis = p.sunVis;
+    if (vis > 0.03) {
+        let cx = wrapBG(p.sunX * W - g.bgX * 0.2);
+        if (cx > W + 24) cx -= BG_W;
+        const cy = Math.round(6 + p.sunY * (HORIZON - 10)), r = Math.round(p.sunR);
+        disc(cx, cy, r + 4, css(p.sun, (0.16 * vis).toFixed(3)));
+        disc(cx, cy, r, css(p.sun, vis.toFixed(3)));
+        if (p.moon > 0.5) {
+            ctx.fillStyle = css(scale3(p.sun, 0.8), vis.toFixed(3));
+            ctx.fillRect(cx - 3, cy - 2, 2, 2);
+            ctx.fillRect(cx + 1, cy + 2, 3, 2);
+            ctx.fillRect(cx + 2, cy - 4, 1, 1);
+        }
+    }
+
+    const cc = css(p.cloud), cs = css(scale3(p.cloud, 0.86));
+    const count = 4 + Math.round(p.over * 4);
+    for (let i = 0; i < count; i++) {
+        const c = CLOUDS[i];
+        let x = wrapBG(c.x - g.bgX * 0.25 - g.t * c.drift);
+        if (x > W) x -= BG_W;
+        for (let k = 0; k < c.spans.length; k++) {
+            const [a, b] = c.spans[k];
+            ctx.fillStyle = k < 2 ? cs : cc;
+            ctx.fillRect(Math.round(x + a), c.y - k, b - a, 1);
+        }
+    }
+}
+
+function drawBolt(g) {
+    ctx.fillStyle = 'rgba(255,255,240,0.95)';
+    for (let i = 0; i < g.bolt.length - 1; i++) {
+        const [x0, y0] = g.bolt[i], [x1, y1] = g.bolt[i + 1];
+        const steps = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
+        for (let k = 0; k <= steps; k++) ctx.fillRect(Math.round(lerp(x0, x1, k / steps)), Math.round(lerp(y0, y1, k / steps)), 1, 1);
+    }
+}
+
+function drawMountains(p, g) {
+    const hazeF = clamp(0.3 + p.fogD * 38, 0, 1), hazeN = clamp(0.1 + p.fogD * 30, 0, 1);
+    const far = mix(p.far, p.fog, hazeF);
+    const cap = mix(far, [240, 244, 252], (0.25 + 0.5 * Env.cover) * (0.3 + 0.7 * p.light) * (1 - hazeF * 0.6));
+    const near = mix(p.near, p.fog, hazeN);
+    const of = g.bgX * 0.5, on = g.bgX;
+    ctx.fillStyle = css(far);
+    for (let x = 0; x < W; x++) {
+        const h = FAR[wrapBG(x + of)];
+        ctx.fillRect(x, HORIZON - h, 1, h + 4);
+    }
+    ctx.fillStyle = css(cap);
+    for (let x = 0; x < W; x++) {
+        const h = FAR[wrapBG(x + of)];
+        if (h > 26) ctx.fillRect(x, HORIZON - h, 1, Math.min(h - 26, 5));
+    }
+    ctx.fillStyle = css(near);
+    for (let x = 0; x < W; x++) {
+        const h = NEAR[wrapBG(x + on)];
+        ctx.fillRect(x, HORIZON - h, 1, H - HORIZON + h);
+    }
+}
+
+// ---------- Road ----------
+function project(p, cx, cy, cz) {
+    p.scale = CAM_DEPTH / cz;
+    p.sx = W / 2 + p.scale * cx * W / 2;
+    p.sy = HORIZON - p.scale * cy * H / 2;
+    p.sw = p.scale * ROAD * W / 2;
+}
+
+function drawRows(s, maxy, p) {
+    const a = s.p1, b = s.p2;
+    const yTop = Math.max(0, Math.round(b.sy)), yBot = Math.min(Math.round(maxy), Math.round(a.sy), H);
+    if (yBot <= yTop) return;
+    const st = s.stripe, f = s.fog, h = s.hl, L = p.lit;
+    const col = k => {
+        let c = p[k];
+        if (h > 0) c = mix(c, L[k], h);
+        return css(f > 0.004 ? mix(c, p.fog, f) : c);
+    };
+    const grass = col(st ? 'grassA' : 'grassB'), road = col(st ? 'roadA' : 'roadB'), rumble = col(st ? 'rumA' : 'rumB');
+    const lane = st ? col('lane') : null;
+    const track = Env.cover > 0.05 ? col('track') : null;
+    const laneAlpha = 1 - Env.cover * 0.85;
+    const dy = a.sy - b.sy;
+    for (let y = yTop; y < yBot; y++) {
+        const t = (a.sy - y) / dy;
+        const cx = a.sx + (b.sx - a.sx) * t, w = a.sw + (b.sw - a.sw) * t;
+        const r = Math.max(1, w * 0.12);
+        ctx.fillStyle = grass;
+        ctx.fillRect(0, y, W, 1);
+        const x0 = Math.round(cx - w - r), x1 = Math.round(cx + w + r);
+        ctx.fillStyle = rumble;
+        ctx.fillRect(x0, y, x1 - x0, 1);
+        const r0 = Math.round(cx - w), r1 = Math.round(cx + w);
+        ctx.fillStyle = road;
+        ctx.fillRect(r0, y, r1 - r0, 1);
+        if (track) {
+            const tw = Math.max(1, Math.round(w * 0.05));
+            ctx.fillStyle = track;
+            ctx.globalAlpha = Env.cover;
+            for (const l of LANES) {
+                const lc = cx + l * w;
+                ctx.fillRect(Math.round(lc - w * 0.14 - tw / 2), y, tw, 1);
+                ctx.fillRect(Math.round(lc + w * 0.14 - tw / 2), y, tw, 1);
+            }
+            ctx.globalAlpha = 1;
+        }
+        if (lane) {
+            const lw = Math.max(1, Math.round(w * 0.025));
+            ctx.fillStyle = lane;
+            ctx.globalAlpha = laneAlpha;
+            ctx.fillRect(Math.round(cx - w / 3 - lw / 2), y, lw, 1);
+            ctx.fillRect(Math.round(cx + w / 3 - lw / 2), y, lw, 1);
+            ctx.globalAlpha = 1;
+        }
+    }
+}
+
+// ---------- Sprites ----------
+function blit(img, cx, by, dw, dh, clipY, alpha) {
+    if (dw < 0.5 || dh < 0.5 || alpha < 0.02) return;
+    const w = Math.max(1, Math.round(dw)), h = Math.max(1, Math.round(dh));
+    const x = Math.round(cx - w / 2), y = Math.round(by - h);
+    if (x > W || x + w < 0 || y > H) return;
+    const clipH = Math.max(0, y + h - clipY);
+    if (clipH >= h) return;
+    ctx.globalAlpha = Math.min(1, alpha);
+    ctx.drawImage(img, 0, 0, img.width, img.height * (h - clipH) / h, x, y, w, h - clipH);
+    ctx.globalAlpha = 1;
+}
+
+function glow(img, cx, by, dw, dh, clipY, alpha) {
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.imageSmoothingEnabled = true;
+    blit(img, cx, by + dh * 0.3, dw * 1.6, dh * 1.6, clipY + dh * 0.3, alpha);
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+function reflection(cx, by, dw, dh, clipY, alpha) {
+    if (by >= clipY || alpha < 0.02) return;
+    const w = Math.max(1, Math.round(dw * 0.12)), h = Math.max(1, Math.round(Math.min(dh * 0.45, clipY - by)));
+    ctx.fillStyle = `rgba(255,70,55,${alpha.toFixed(3)})`;
+    ctx.fillRect(Math.round(cx - dw * 0.36 - w / 2), Math.round(by), w, h);
+    ctx.fillRect(Math.round(cx + dw * 0.36 - w / 2), Math.round(by), w, h);
+}
+
+function shadow(cx, by, dw, clipY, alpha) {
+    if (by > clipY) return;
+    ctx.fillStyle = `rgba(0,0,0,${(0.28 * alpha).toFixed(3)})`;
+    ctx.fillRect(Math.round(cx - dw * 0.46), Math.round(by - 1), Math.round(dw * 0.92), Math.max(1, Math.round(dw * 0.04)));
+}
+
+function drawScenery(s, sp, p, dark) {
+    const spr = scenerySprite(sp.t, Env.cover > 0.5);
+    const dw = spr.w / 2 * PX * SCENERY[sp.t] * s.p1.sw;
+    const dh = dw * spr.h / spr.w;
+    const x = s.p1.sx + s.p1.sw * sp.x;
+    const lit = clamp(p.ambient + s.hl * (Math.abs(sp.x) < 2 ? 0.8 : 0.35), 0, 1);
+    blit(shaded(spr, Math.round((1 - lit) * 7)), x, s.p1.sy, dw, dh, s.clip, 1 - s.fog);
+    if (spr.lights && dark > 0.3) {
+        blit(spr.lights, x, s.p1.sy, dw, dh, s.clip, dark * clamp(1.2 - s.n / 140, 0.25, 1) * (1 - s.fog * 0.6));
+    }
+}
+
+function drawCar(s, c, p, dark) {
+    const t = (c.z - s.index * SEG) / SEG;
+    const a = s.p1, b = s.p2;
+    const sw = lerp(a.sw, b.sw, t), sy = lerp(a.sy, b.sy, t), sx = lerp(a.sx, b.sx, t) + sw * c.x;
+    const spr = c.spr, dw = CAR_W * sw, dh = dw * spr.h / spr.w;
+    const alpha = 1 - s.fog;
+    const lit = clamp(p.ambient + s.hl * 0.85, 0, 1);
+    const la = clamp(dark * 1.5 + Env.fog * 0.7 + p.over * 0.3, 0, 1) * (1 - s.fog * 0.45);
+    if (Env.wet > 0.3) reflection(sx, sy, dw, dh, s.clip, Env.wet * (0.1 + 0.35 * dark) * (1 - s.fog));
+    shadow(sx, sy, dw, s.clip, alpha * p.ambient);
+    blit(shaded(spr, Math.round((1 - lit) * 7)), sx, sy, dw, dh, s.clip, alpha);
+    if (la > 0.03) {
+        blit(spr.lights, sx, sy, dw, dh, s.clip, la);
+        if (dark > 0.35 && dw > 8) glow(spr.lights, sx, sy, dw, dh, s.clip, la * 0.45);
+    }
+    if (s.n < 30 && c.speed > 1500 && dw > 10 && sy < s.clip && Math.random() < 0.35) {
+        const color = Env.cover > 0.4 ? [236, 240, 250] : Env.wet > 0.4 ? mix(p.fog, [220, 225, 235], 0.5) : null;
+        if (color) puff(sx + (Math.random() < 0.5 ? -1 : 1) * dw * 0.3, sy - 1, rand(-10, 10), rand(-16, -4), 0.35, Math.max(1, dw * 0.07), color, 0.5);
+    }
+}
+
+function drawBeams(dark) {
+    const a = Math.min(0.32, 0.18 * dark * (1 + Env.fog * 1.2));
+    const grad = ctx.createLinearGradient(0, PLAYER_Y - 28, 0, HORIZON + 28);
+    grad.addColorStop(0, `rgba(255,240,200,${a.toFixed(3)})`);
+    grad.addColorStop(1, 'rgba(255,240,200,0)');
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - 24, PLAYER_Y - 28);
+    ctx.lineTo(W / 2 + 24, PLAYER_Y - 28);
+    ctx.lineTo(W / 2 + 92, HORIZON + 28);
+    ctx.lineTo(W / 2 - 92, HORIZON + 28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+function drawPlayer(g, p, dark) {
+    const spr = SPR.player;
+    if (p.lit) drawBeams(dark);
+    const sp = g.speed / MAX_SPEED;
+    const bounce = sp > 0.02 ? (((g.t * (g.offroad ? 24 : 12)) | 0) % 2) * (g.offroad ? 2 : 1) : 0;
+    const x = Math.round(W / 2 - spr.w / 2 + g.shake * (Math.random() - 0.5) * 8);
+    const y = Math.round(PLAYER_Y - spr.h - bounce);
+    if (Env.wet > 0.3) reflection(W / 2, PLAYER_Y, spr.w, spr.h, H, Env.wet * (0.12 + 0.4 * dark));
+    shadow(W / 2, PLAYER_Y, spr.w, H, 1);
+    const skew = clamp(-g.vx * 0.045, -0.14, 0.14);
+    ctx.setTransform(1, 0, skew, 1, -skew * PLAYER_Y, 0);
+    ctx.drawImage(shaded(spr, Math.round((1 - Math.max(p.ambient, 0.42)) * 7)), x, y);
+    const la = g.braking ? 1 : clamp(dark * 1.5 + Env.fog * 0.6, 0, 1);
+    if (la > 0.03) {
+        ctx.globalAlpha = la;
+        ctx.drawImage(spr.lights, x, y);
+        ctx.globalAlpha = 1;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (la > 0.3 && (dark > 0.35 || g.braking)) glow(spr.lights, W / 2, PLAYER_Y - bounce, spr.w, spr.h, H, la * 0.4);
+}
+
+// ---------- Weather particles ----------
+function emitPlayerFx(g, dt) {
+    const sp = g.speed / MAX_SPEED;
+    if (sp < 0.15) return;
+    let color = null, rate = 0;
+    if (g.offroad) {
+        color = Env.cover > 0.5 ? [236, 240, 250] : mix(Env.pal.grassA, [110, 80, 50], 0.5);
+        rate = 2;
+    } else if (Env.cover > 0.3) {
+        color = [236, 240, 250];
+        rate = Env.cover * 1.5;
+    } else if (Env.wet > 0.3) {
+        color = mix(Env.pal.fog, [220, 225, 235], 0.5);
+        rate = Env.wet * 2;
+    }
+    if (!color) return;
+    for (const side of [-1, 1]) {
+        if (Math.random() < rate * sp * dt * 30) {
+            puff(W / 2 + side * 24 + rand(-3, 3), PLAYER_Y - 3, side * rand(10, 40), rand(-30, -8), rand(0.25, 0.5), rand(2, 4), color, 0.55);
+        }
+    }
+}
+
+function updateParticles(dt, g) {
+    const sp = g.speed / MAX_SPEED;
+    const wind = Env.wind * Math.sin(g.t * 0.6) * 60 - g.vx * 25;
+    const nr = Math.round(RAIN.length * clamp(Env.rain, 0, 1));
+    for (let i = 0; i < nr; i++) {
+        const r = RAIN[i];
+        r.y += (r.v + sp * 120) * dt;
+        r.x += (wind - 30) * dt * 0.6;
+        if (r.y > H) {
+            r.y = -r.l;
+            r.x = rand(-20, W + 20);
+        }
+        if (r.x < -20) r.x += W + 40;
+        else if (r.x > W + 20) r.x -= W + 40;
+    }
+    const nf = Math.round(FLAKES.length * clamp(Env.snow, 0, 1));
+    for (let i = 0; i < nf; i++) {
+        const f = FLAKES[i];
+        f.x += ((f.x - W / 2) * sp * 1.4 + wind * 0.8 + Math.sin(g.t * 2 + f.p) * 8) * dt;
+        f.y += (f.v + (f.y - HORIZON) * sp * 1.4) * dt;
+        if (f.x < -4 || f.x > W + 4 || f.y > H + 4 || f.y < -12) {
+            if (sp > 0.3) {
+                f.x = W / 2 + rand(-120, 120);
+                f.y = HORIZON + rand(-55, 30);
+            } else {
+                f.x = rand(W);
+                f.y = -2;
+            }
+        }
+    }
+    for (let i = PUFFS.length - 1; i >= 0; i--) {
+        const q = PUFFS[i];
+        q.life -= dt;
+        if (q.life <= 0) {
+            PUFFS.splice(i, 1);
+            continue;
+        }
+        q.x += q.vx * dt;
+        q.y += q.vy * dt;
+        q.vy += 40 * dt;
+    }
+    if (Env.rain > 0.3 && Math.random() < Env.rain * dt * 40) {
+        puff(rand(40, W - 40), rand(HORIZON + 40, H), 0, -6, 0.15, 1, [210, 220, 240], 0.7);
+    }
+}
+
+function drawWeather(g, p) {
+    const dark = 1 - p.light;
+    for (const q of PUFFS) {
+        const k = q.life / q.max, s = Math.max(1, Math.round(q.size * (2 - k)));
+        ctx.fillStyle = css(q.color, (k * q.a).toFixed(3));
+        ctx.fillRect(Math.round(q.x - s / 2), Math.round(q.y - s / 2), s, s);
+    }
+    const nr = Math.round(RAIN.length * clamp(Env.rain, 0, 1));
+    if (nr) {
+        const slant = Env.wind * Math.sin(g.t * 0.6) - g.vx * 0.4 > 0 ? 1 : -1;
+        ctx.fillStyle = css(mix([190, 205, 235], [70, 80, 110], dark), 0.55);
+        for (let i = 0; i < nr; i++) {
+            const r = RAIN[i], x = r.x | 0, y = r.y | 0, h = (r.l / 2) | 0;
+            ctx.fillRect(x, y, 1, h);
+            ctx.fillRect(x - slant, y + h, 1, h);
+        }
+    }
+    const nf = Math.round(FLAKES.length * clamp(Env.snow, 0, 1));
+    if (nf) {
+        ctx.fillStyle = css(mix([250, 252, 255], [150, 160, 190], dark), 0.9);
+        for (let i = 0; i < nf; i++) {
+            const f = FLAKES[i];
+            ctx.fillRect(f.x | 0, f.y | 0, f.s, f.s);
+        }
+    }
+}
+
+// ---------- Frame ----------
+function renderGame(g) {
+    frameId++;
+    const p = Env.pal;
+    const dark = 1 - p.light;
+    drawSky(p, g);
+    if (g.flash > 0.4 && g.bolt) drawBolt(g);
+    drawMountains(p, g);
+
+    const base = Math.floor(g.pos / SEG), pct = (g.pos - base * SEG) / SEG;
+    const pz = g.pos + PLAYER_Z, pIdx = Math.floor(pz / SEG), pSeg = Road.seg(pIdx);
+    const camY = lerp(pSeg.y1, pSeg.y2, (pz - pIdx * SEG) / SEG) + CAM_H;
+    const camX = g.x * ROAD;
+
+    for (const c of g.cars) {
+        const idx = Math.floor(c.z / SEG);
+        if (idx < base || idx >= base + DRAW) continue;
+        const s = Road.seg(idx);
+        if (s.carFrame !== frameId) {
+            s.carFrame = frameId;
+            s.cars = [];
+        }
+        s.cars.push(c);
+    }
+
+    let x = 0, dx = -Road.seg(base).curve * pct, maxy = H;
+    for (let n = 0; n < DRAW; n++) {
+        const s = Road.seg(base + n);
+        const z1 = (base + n) * SEG - g.pos;
+        s.n = n;
+        s.clip = maxy;
+        project(s.p1, x - camX, s.y1 - camY, z1);
+        project(s.p2, x + dx - camX, s.y2 - camY, z1 + SEG);
+        x += dx;
+        dx += s.curve;
+        s.front = z1 > CAM_DEPTH;
+        s.fog = 1 - Math.exp(-n * p.fogD);
+        s.hl = p.lit ? dark * Math.pow(clamp(1 - n / 55, 0, 1), 1.3) : 0;
+        if (!s.front || s.p2.sy >= s.p1.sy || s.p2.sy >= maxy) continue;
+        drawRows(s, maxy, p);
+        maxy = s.p2.sy;
+    }
+
+    for (let n = DRAW - 1; n > 0; n--) {
+        const s = Road.seg(base + n);
+        if (!s.front) continue;
+        for (const sp of s.sprites) drawScenery(s, sp, p, dark);
+        const cars = s.carFrame === frameId ? s.cars : null;
+        if (cars) cars.sort((a, b) => b.z - a.z);
+        if (s.index === pIdx) {
+            if (cars) for (const c of cars) if (c.z >= pz) drawCar(s, c, p, dark);
+            drawPlayer(g, p, dark);
+            if (cars) for (const c of cars) if (c.z < pz) drawCar(s, c, p, dark);
+        } else if (cars) {
+            for (const c of cars) drawCar(s, c, p, dark);
+        }
+    }
+
+    drawWeather(g, p);
+    if (g.flash > 0) {
+        ctx.fillStyle = `rgba(225,232,255,${(g.flash * 0.5).toFixed(3)})`;
+        ctx.fillRect(0, 0, W, H);
+    }
+    if (g.hit > 0) {
+        ctx.fillStyle = `rgba(255,90,60,${(g.hit * 0.25).toFixed(3)})`;
+        ctx.fillRect(0, 0, W, H);
+    }
+}
+
+</script>
+<script>
+'use strict';
+// Game: Enduro-style day quotas, driving physics per weather, traffic, HUD, sound, input and the main loop.
+
+const $ = id => document.getElementById(id);
+const BEST_KEY = 'estrada-sem-fim:best';
+
+const g = {
+    state: 'title', demo: true, t: 0, day: 1, dayT: 0, rules: dayRules(1), sched: [], nextSched: [],
+    passed: 0, total: 0, km: 0, quotaDone: false, phase: -1,
+    pos: 0, x: 0, vx: 0, speed: 0, offroad: false, braking: false, aqua: 0,
+    shake: 0, hit: 0, flash: 0, bolt: null, boltT: 4, thunderT: -1,
+    cars: [], spawnAcc: 0, nextGap: 2000, bgX: 0, autoX: 0, best: null, muted: false,
+};
+
+// ---------- Run setup ----------
+function newRun(demo) {
+    g.demo = demo;
+    g.day = demo ? 4 : 1;
+    g.rules = dayRules(g.day);
+    g.sched = makeSchedule(g.day);
+    g.nextSched = makeSchedule(g.day + 1);
+    g.dayT = demo ? rand(DAY_LEN) : 0;
+    g.passed = 0;
+    g.total = 0;
+    g.km = 0;
+    g.quotaDone = false;
+    g.phase = -1;
+    g.pos = 0;
+    g.x = 0;
+    g.vx = 0;
+    g.autoX = 0;
+    g.speed = demo ? MAX_SPEED * 0.7 : 0;
+    g.shake = 0;
+    g.hit = 0;
+    g.flash = 0;
+    g.cars = [];
+    g.spawnAcc = 0;
+    g.nextGap = g.rules.gap;
+    PUFFS.length = 0;
+    Road.reset();
+    Road.curveMax = g.rules.curveMax;
+    Road.ensure(DRAW + 8);
+    const ph = phaseAt(g.dayT);
+    Env.reset(g.sched[ph.i]);
+    Env.pal = blendPalette(PAL[TIMES[ph.i].pal], PAL[TIMES[ph.i].pal], 0, Env);
+    for (let z = 3000; z < DRAW * SEG; z += g.rules.gap * rand(0.6, 1.4)) spawnCar(z, true);
+}
+
+function start() {
+    if (g.state === 'playing' || g.state === 'paused') return;
+    Sound.init();
+    newRun(false);
+    g.state = 'playing';
+    showOverlay(null);
+    banner('DIA 1', `ULTRAPASSE ${g.rules.quota} CARROS ATÉ O AMANHECER`, 3400);
+    Sound.jingle([392, 523, 659, 784]);
+    keepAwake();
+}
+
+function pause() {
+    if (g.state !== 'playing') return;
+    g.state = 'paused';
+    showOverlay('pause-ov');
+}
+
+function resume() {
+    if (g.state !== 'paused') return;
+    g.state = 'playing';
+    showOverlay(null);
+}
+
+function togglePause() {
+    if (g.state === 'playing') pause();
+    else if (g.state === 'paused') resume();
+}
+
+// ---------- Traffic ----------
+function trafficAvg() {
+    return MAX_SPEED * g.rules.carFrac * Env.trafficMul();
+}
+
+function spawnCar(z, ahead) {
+    const used = new Set();
+    for (const c of g.cars) if (Math.abs(c.z - z) < 1500) used.add(c.lane);
+    if (used.size >= 2) return false;   // always leave the player a free lane
+    let free = [0, 1, 2].filter(l => !used.has(l));
+    if (!ahead) {
+        const away = free.filter(l => Math.abs(LANES[l] - g.x) > 0.45);
+        if (away.length) free = away;
+    }
+    const lane = pick(free), avg = trafficAvg();
+    const c = { z, x: LANES[lane], tx: LANES[lane], lane, k: rand(0.82, 1.18), speed: 0, spr: randomCarSprite(), ahead: z > g.pos + PLAYER_Z, laneT: rand(1, 4) };
+    if (!ahead) c.k = Math.max(c.k, (g.speed + 1400) / Math.max(avg, 1));
+    c.speed = avg * c.k;
+    g.cars.push(c);
+    return true;
+}
+
+function laneOk(c, l, pz) {
+    const guard = Math.max(1200, 2600 - 150 * g.day);
+    if (!g.demo && Math.abs(c.z - pz) < guard && Math.abs(LANES[l] - g.x) < 0.5) return false;
+    const used = new Set([l]);
+    for (const o of g.cars) {
+        if (o === c || Math.abs(o.z - c.z) > 1500) continue;
+        if (o.lane === l && Math.abs(o.z - c.z) < 1100) return false;
+        used.add(o.lane);
+    }
+    return used.size < 3;
+}
+
+function tryLane(c, pz) {
+    const opts = [c.lane - 1, c.lane + 1].filter(l => l >= 0 && l <= 2 && laneOk(c, l, pz));
+    if (!opts.length) return false;
+    c.lane = pick(opts);
+    c.tx = LANES[c.lane];
+    return true;
+}
+
+function updateTraffic(dt) {
+    const pz = g.pos + PLAYER_Z, avg = trafficAvg();
+    for (const c of g.cars) {
+        let want = c.k * avg;
+        for (const o of g.cars) {
+            if (o !== c && o.z > c.z && o.z - c.z < 900 && Math.abs(o.x - c.x) < 0.36) want = Math.min(want, o.speed);
+        }
+        if (!g.demo && c.z < pz && pz - c.z < 1200 && Math.abs(c.x - g.x) < 0.45) {
+            if (!tryLane(c, pz)) want = Math.min(want, g.speed * 0.98);
+        }
+        c.speed += clamp(want - c.speed, -7000 * dt, 2500 * dt);
+        c.laneT -= dt;
+        if (c.laneT <= 0) {
+            c.laneT = rand(2, 5);
+            if (Math.random() < g.rules.laneChange) tryLane(c, pz);
+        }
+        c.x += clamp(c.tx - c.x, -0.6 * dt, 0.6 * dt);
+        c.z += c.speed * dt;
+        const ahead = c.z > pz;
+        if (g.state === 'playing' && ahead !== c.ahead) onPass(ahead ? -1 : 1);
+        c.ahead = ahead;
+    }
+    g.cars = g.cars.filter(c => c.z > g.pos - 3000 && c.z < g.pos + DRAW * SEG + 3000);
+
+    // Traffic is a stream: spawn ahead as we gain on it, behind when it gains on us.
+    g.spawnAcc += (g.speed - avg) * dt;
+    if (g.spawnAcc > g.nextGap) {
+        if (spawnCar(g.pos + DRAW * SEG * 0.97, true)) {
+            g.spawnAcc -= g.nextGap;
+            g.nextGap = g.rules.gap * rand(0.6, 1.4);
+        }
+    } else if (g.spawnAcc < -g.nextGap) {
+        if (spawnCar(g.pos - 500, false)) {
+            g.spawnAcc += g.nextGap;
+            g.nextGap = g.rules.gap * rand(0.6, 1.4);
+        }
+    }
+}
+
+function onPass(d) {
+    g.passed += d;
+    g.total += d;
+    if (!g.quotaDone && g.passed >= g.rules.quota) {
+        g.quotaDone = true;
+        banner('META ATINGIDA!', `DIA ${g.day} GARANTIDO · SIGA ATÉ O AMANHECER`);
+        Sound.jingle([523, 659, 784, 1047]);
+    }
+}
+
+// ---------- Player ----------
+function updatePlayer(dt, inp) {
+    const grip = Env.grip(), max = MAX_SPEED * Env.maxMul();
+    g.offroad = Math.abs(g.x) > 1.08;
+    const cap = g.offroad ? max * 0.4 : max;
+    g.braking = !!inp.brake && g.speed > 50;
+    if (inp.gas && !inp.brake) g.speed += MAX_SPEED / 4 * Env.accMul() * (1 - 0.6 * g.speed / max) * dt;
+    else if (inp.brake) g.speed -= MAX_SPEED * 0.9 * Env.brakeMul() * dt;
+    else g.speed -= MAX_SPEED / 7 * dt;
+    if (g.speed > cap) g.speed = Math.max(cap, g.speed - MAX_SPEED * 0.7 * dt);
+    g.speed = clamp(g.speed, 0, MAX_SPEED);
+
+    // Grip sets how fast lateral speed follows the wheel: on ice the car keeps sliding.
+    const sp = g.speed / MAX_SPEED;
+    const steer = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+    const target = steer * 2.4 * Math.min(1, sp * 2.2);
+    g.vx += (target - g.vx) * Math.min(1, 8 * grip * grip * dt);
+    const seg = Road.seg(Math.floor((g.pos + PLAYER_Z) / SEG));
+    g.x -= seg.curve * sp * sp * 0.46 * (1 + (1 - grip) * 1.1) * dt;
+    g.x += Env.wind * Math.sin(g.t * 0.6) * Math.sin(g.t * 1.7 + 1) * 0.6 * dt;
+    g.aqua = Math.max(0, Env.wet - 0.4) * Math.max(0, sp - 0.78) * 4 * (0.5 + Env.storm);
+    if (g.aqua > 0) g.vx += (Math.random() - 0.5) * g.aqua * 40 * dt;
+    g.x += g.vx * dt;
+    if (Math.abs(g.x) > 2.3) {
+        g.x = Math.sign(g.x) * 2.3;
+        g.vx *= 0.5;
+    }
+    g.pos += g.speed * dt;
+    g.km += sp * 260 / 3600 * dt;
+    g.bgX += seg.curve * sp * dt * 22;
+}
+
+function collide() {
+    const pz = g.pos + PLAYER_Z;
+    for (const c of g.cars) {
+        const dz = c.z - pz;
+        if (Math.abs(dz) >= CAR_LEN || Math.abs(c.x - g.x) >= CAR_W * 0.88) continue;
+        if (dz >= 0) {
+            crash(g.speed - c.speed);
+            g.speed = Math.min(g.speed, c.speed * 0.55);
+            g.pos = c.z - PLAYER_Z - CAR_LEN;
+        } else {
+            crash(c.speed - g.speed);
+            c.speed = Math.min(c.speed, g.speed * 0.8);
+            c.z = pz - CAR_LEN;
+        }
+        g.vx += (g.x >= c.x ? 1 : -1) * 0.9;
+    }
+}
+
+function crash(impact) {
+    const k = clamp(impact / 6000, 0.25, 1);
+    g.shake = 0.5 * k + 0.2;
+    g.hit = 0.6 * k + 0.2;
+    Sound.crash(k);
+    for (let i = 0; i < 14; i++) {
+        puff(W / 2 + rand(-20, 20), PLAYER_Y - 30 + rand(-6, 6), rand(-70, 70), rand(-80, -10), rand(0.2, 0.5), rand(1, 3), [255, rand(150, 220), 60], 0.9);
+    }
+}
+
+function autopilot() {
+    const pz = g.pos + PLAYER_Z;
+    const blocked = lx => g.cars.some(c => c.z > pz - 200 && c.z - pz < 3500 && Math.abs(c.x - lx) < 0.45);
+    if (blocked(g.autoX)) {
+        const opts = LANES.filter(l => !blocked(l));
+        if (opts.length) g.autoX = opts.reduce((a, b) => (Math.abs(b - g.x) < Math.abs(a - g.x) ? b : a));
+    }
+    const aim = g.autoX + Road.seg(Math.floor(pz / SEG)).curve * 0.05;
+    return { gas: g.speed < MAX_SPEED * 0.72, brake: false, left: g.x > aim + 0.06, right: g.x < aim - 0.06 };
+}
+
+// ---------- Day cycle ----------
+function updateEnv(dt) {
+    const ph = phaseAt(g.dayT);
+    const nextW = ph.i + 1 < TIMES.length ? g.sched[ph.i + 1] : g.nextSched[0];
+    Env.update(dt, WEATHERS[ph.p < 0.85 ? g.sched[ph.i] : nextW]);
+    if (ph.i !== g.phase) {
+        const announce = g.phase !== -1 && g.state === 'playing' && ph.i !== 0;
+        g.phase = ph.i;
+        if (announce) announcePhase(ph.i);
+    }
+}
+
+function announcePhase(i) {
+    const w = WEATHERS[g.sched[i]];
+    const tip = w === WEATHERS.clear && TIMES[i].night ? 'NO ESCURO SÓ AS LANTERNAS APARECEM' : w.tip;
+    banner(TIMES[i].name, `${w.name} · ${tip}`);
+    Sound.chime();
+}
+
+function endOfDay() {
+    if (!g.quotaDone) {
+        gameOver();
+        return;
+    }
+    g.day++;
+    g.dayT -= DAY_LEN;
+    g.rules = dayRules(g.day);
+    Road.curveMax = g.rules.curveMax;
+    g.sched = g.nextSched;
+    g.nextSched = makeSchedule(g.day + 1);
+    g.passed = 0;
+    g.quotaDone = false;
+    g.phase = 0;
+    banner(`DIA ${g.day}`, `ULTRAPASSE ${g.rules.quota} CARROS · ${WEATHERS[g.sched[0]].name}`, 3400);
+    Sound.jingle([392, 523, 659, 784, 659, 784]);
+}
+
+function gameOver() {
+    g.state = 'over';
+    const run = { day: g.day, cars: g.total, km: g.km };
+    const isBest = !g.best || run.day > g.best.day || (run.day === g.best.day && run.cars > g.best.cars);
+    if (isBest) {
+        g.best = run;
+        saveBest();
+    }
+    $('over-msg').textContent = `FALTARAM ${g.rules.quota - g.passed} CARROS NO DIA ${g.day}`;
+    $('over-days').textContent = String(g.day - 1);
+    $('over-cars').textContent = String(g.total);
+    $('over-km').textContent = g.km.toFixed(1);
+    $('over-best').textContent = isBest ? 'NOVO RECORDE!' : bestText();
+    renderBest();
+    showOverlay('over-ov');
+    Sound.jingle([392, 330, 262, 196]);
+}
+
+function weatherEvents(dt) {
+    g.flash = Math.max(0, g.flash - dt * 2.5);
+    if (Env.storm > 0.5) {
+        g.boltT -= dt;
+        if (g.boltT <= 0) {
+            g.boltT = rand(3, 9);
+            g.flash = 1;
+            g.bolt = makeBolt();
+            g.thunderT = rand(0.3, 1.2);
+        }
+    }
+    if (g.thunderT > 0) {
+        g.thunderT -= dt;
+        if (g.thunderT <= 0) Sound.thunder();
+    }
+}
+
+function update(dt) {
+    g.t += dt;
+    Road.ensure(Math.floor(g.pos / SEG) + DRAW + 4);
+    const playing = g.state === 'playing';
+    if (playing) g.dayT += dt;
+    else if (g.state === 'title') {
+        g.dayT += dt * 5;
+        if (g.dayT >= DAY_LEN) {
+            g.dayT -= DAY_LEN;
+            g.sched = g.nextSched;
+            g.nextSched = makeSchedule(3 + (rand(4) | 0));
+        }
+    }
+    updateEnv(dt);
+    const inp = playing ? readInput() : g.state === 'title' ? autopilot() : { brake: g.speed > 0 };
+    updatePlayer(dt, inp);
+    if (playing) collide();
+    updateTraffic(dt);
+    emitPlayerFx(g, dt);
+    updateParticles(dt, g);
+    weatherEvents(dt);
+    g.shake = Math.max(g.offroad ? 0.12 * g.speed / MAX_SPEED : 0, g.shake - dt * 1.5);
+    g.hit = Math.max(0, g.hit - dt * 2);
+    if (playing && g.dayT >= DAY_LEN) endOfDay();
+}
+
+// ---------- HUD ----------
+const hudCache = {};
+function setText(id, v) {
+    if (hudCache[id] !== v) {
+        hudCache[id] = v;
+        $(id).textContent = v;
+    }
+}
+function setAttr(id, attr, v) {
+    const key = id + '@' + attr;
+    if (hudCache[key] !== v) {
+        hudCache[key] = v;
+        $(id).setAttribute(attr, v);
+    }
+}
+
+const strip = $('strip'), sctx = strip.getContext('2d');
+function drawStrip() {
+    const sw = strip.width, sh = strip.height;
+    let x = 0;
+    for (let i = 0; i < TIMES.length; i++) {
+        const w = i === TIMES.length - 1 ? sw - x : Math.round(TIMES[i].dur / DAY_LEN * sw);
+        const pal = PAL[TIMES[i].pal];
+        sctx.fillStyle = css(mix(pal.skyTop, pal.skyBot, 0.55));
+        sctx.fillRect(x, 0, w, sh);
+        let icon = WEATHERS[g.sched[i]].icon;
+        if (icon === 'sun' && TIMES[i].night) icon = 'moon';
+        drawIcon(sctx, icon, x + Math.round(w / 2) - 3, 2);
+        sctx.fillStyle = 'rgba(0,0,0,0.55)';
+        sctx.fillRect(x + w - 1, 0, 1, sh);
+        x += w;
+    }
+    const cx = Math.round(Math.min(g.dayT, DAY_LEN) / DAY_LEN * sw);
+    sctx.fillStyle = 'rgba(8,6,20,0.6)';
+    sctx.fillRect(0, 0, cx, sh);
+    sctx.fillStyle = '#ffffff';
+    sctx.fillRect(cx, 0, 1, sh);
+}
+
+function drawHud(ph) {
+    const kmh = Math.round(g.speed / MAX_SPEED * 260);
+    const attract = g.state === 'title';   // the demo drives a later day; show what a new run starts with
+    setText('odo', (attract ? 0 : g.km).toFixed(1).padStart(7, '0'));
+    setText('day-n', String(attract ? 1 : g.day));
+    const left = attract ? dayRules(1).quota : Math.max(0, g.rules.quota - g.passed);
+    setText('left-n', g.quotaDone ? 'OK' : String(left).padStart(3, '0'));
+    setAttr('left', 'data-state', g.quotaDone ? 'done' : g.state === 'playing' && ph.i === TIMES.length - 1 ? 'warn' : 'run');
+    setText('speed', String(kmh).padStart(3, '0'));
+    setAttr('speedbar', 'style', `transform:scaleX(${(kmh / 260).toFixed(2)})`);
+    setText('wname', `${TIMES[ph.i].name} · ${WEATHERS[g.sched[ph.i]].name}`);
+    const grip = Math.round(Env.grip() * 100);
+    setText('grip', grip + '%');
+    setText('grip-l', g.aqua > 0.12 ? 'AQUAPLANAGEM' : g.offroad ? 'FORA DA PISTA' : 'ADERÊNCIA');
+    setAttr('gripbar', 'style', `transform:scaleX(${(grip / 100).toFixed(2)})`);
+    setAttr('gripbox', 'data-level', grip >= 85 ? 'ok' : grip >= 60 ? 'warn' : 'bad');
+    if (frameId % 6 === 0) drawStrip();
+}
+
+let bannerTimer = 0;
+function banner(title, sub, ms = 2800) {
+    const b = $('banner');
+    $('banner-t').textContent = title;
+    $('banner-s').textContent = sub || '';
+    b.hidden = false;
+    b.classList.remove('show');
+    void b.offsetWidth;
+    b.classList.add('show');
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => { b.hidden = true; }, ms);
+}
+
+function showOverlay(id) {
+    for (const o of ['title-ov', 'pause-ov', 'over-ov']) $(o).hidden = o !== id;
+    const btn = id && $(id).querySelector('button');
+    if (btn) btn.focus({ preventScroll: true });
+}
+
+function bestText() {
+    return g.best ? `RECORDE: DIA ${g.best.day} · ${g.best.cars} CARROS · ${g.best.km.toFixed(1)} KM` : 'SEM RECORDE AINDA';
+}
+
+function renderBest() {
+    $('title-best').textContent = bestText();
+}
+
+function loadBest() {
+    try {
+        const v = JSON.parse(localStorage.getItem(BEST_KEY));
+        if (v && typeof v.day === 'number') return v;
+    } catch (e) { /* storage unavailable */ }
+    return null;
+}
+
+function saveBest() {
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(g.best)); } catch (e) { /* storage unavailable */ }
+}
+
+// ---------- Sound (Web Audio, starts on the first key or tap) ----------
+const Sound = {
+    ac: null, master: null,
+
+    init() {
+        if (this.ac) {
+            if (this.ac.state === 'suspended') this.ac.resume();
+            return;
+        }
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        try { this.ac = new AC(); } catch (e) { return; }
+        const ac = this.ac;
+        this.master = ac.createGain();
+        this.master.gain.value = g.muted ? 0 : 0.6;
+        this.master.connect(ac.destination);
+        this.ef = ac.createBiquadFilter();
+        this.ef.type = 'lowpass';
+        this.ef.frequency.value = 800;
+        this.ef.Q.value = 3;
+        this.eg = ac.createGain();
+        this.eg.gain.value = 0;
+        this.ef.connect(this.eg);
+        this.eg.connect(this.master);
+        this.o1 = ac.createOscillator();
+        this.o1.type = 'sawtooth';
+        this.o2 = ac.createOscillator();
+        this.o2.type = 'square';
+        const sub = ac.createGain();
+        sub.gain.value = 0.35;
+        this.o1.connect(this.ef);
+        this.o2.connect(sub);
+        sub.connect(this.ef);
+        this.o1.start();
+        this.o2.start();
+        const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        this.noise = buf;
+        this.rain = this.loop('bandpass', 2600, 0.7);
+        this.wind = this.loop('bandpass', 500, 3);
+        this.rumble = this.loop('lowpass', 260, 1);
+    },
+
+    loop(type, freq, q) {
+        const ac = this.ac, s = ac.createBufferSource(), f = ac.createBiquadFilter(), gn = ac.createGain();
+        s.buffer = this.noise;
+        s.loop = true;
+        f.type = type;
+        f.frequency.value = freq;
+        f.Q.value = q;
+        gn.gain.value = 0;
+        s.connect(f);
+        f.connect(gn);
+        gn.connect(this.master);
+        s.start();
+        return { gain: gn.gain, freq: f.frequency };
+    },
+
+    // Engine pitch climbs through four gears, then a short fifth.
+    update() {
+        if (!this.ac) return;
+        const t = this.ac.currentTime, sp = g.speed / MAX_SPEED, live = g.state === 'playing' || g.state === 'over';
+        const gf = sp * 4.2, gear = Math.min(4, Math.floor(gf)), rpm = gear >= 4 ? 0.6 + (gf - 4) * 2 : gf - gear;
+        const f = 50 + gear * 10 + rpm * 120;
+        this.o1.frequency.setTargetAtTime(f, t, 0.03);
+        this.o2.frequency.setTargetAtTime(f * 0.501, t, 0.03);
+        this.ef.frequency.setTargetAtTime(420 + sp * 1300, t, 0.05);
+        this.eg.gain.setTargetAtTime(live ? 0.05 + sp * 0.05 : 0, t, 0.1);
+        this.rain.gain.setTargetAtTime(live ? Env.rain * 0.13 : 0, t, 0.4);
+        this.wind.gain.setTargetAtTime(live ? Env.wind * 0.1 + Env.snow * 0.03 : 0, t, 0.4);
+        this.wind.freq.setTargetAtTime(380 + Math.sin(t * 0.7) * 160 + Env.wind * 220, t, 0.3);
+        this.rumble.gain.setTargetAtTime(live && g.offroad && sp > 0.05 ? 0.3 : 0, t, 0.05);
+    },
+
+    tone(freq, dur, type, vol, delay) {
+        if (!this.ac) return;
+        const t = this.ac.currentTime + (delay || 0), o = this.ac.createOscillator(), gn = this.ac.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        gn.gain.setValueAtTime(vol, t);
+        gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(gn);
+        gn.connect(this.master);
+        o.start(t);
+        o.stop(t + dur + 0.02);
+    },
+
+    burst(dur, freq, vol) {
+        if (!this.ac) return;
+        const t = this.ac.currentTime, s = this.ac.createBufferSource(), f = this.ac.createBiquadFilter(), gn = this.ac.createGain();
+        s.buffer = this.noise;
+        f.type = 'lowpass';
+        f.frequency.value = freq;
+        gn.gain.setValueAtTime(vol, t);
+        gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        s.connect(f);
+        f.connect(gn);
+        gn.connect(this.master);
+        s.start(t);
+        s.stop(t + dur + 0.05);
+    },
+
+    crash(k) { this.burst(0.35, 1800, 0.5 * k + 0.15); this.tone(90, 0.3, 'square', 0.15 * k + 0.05); },
+    thunder() { this.burst(1.8, 220, 0.6); },
+    jingle(notes) { notes.forEach((n, i) => this.tone(n, 0.16, 'square', 0.07, i * 0.11)); },
+    chime() { this.tone(880, 0.12, 'triangle', 0.08); this.tone(1320, 0.18, 'triangle', 0.06, 0.08); },
+
+    setMuted(m) {
+        if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.6, this.ac.currentTime, 0.05);
+    },
+};
+
+function toggleMute() {
+    g.muted = !g.muted;
+    Sound.setMuted(g.muted);
+    const b = $('btn-sound');
+    b.textContent = g.muted ? 'MUDO' : 'SOM';
+    b.setAttribute('aria-pressed', String(g.muted));
+}
+
+function toggleFull() {
+    const el = $('stage');
+    try {
+        if (!document.fullscreenElement) el.requestFullscreen().catch(() => {});
+        else document.exitFullscreen().catch(() => {});
+    } catch (e) { /* fullscreen not available here */ }
+}
+
+async function keepAwake() {
+    try { if (navigator.wakeLock) await navigator.wakeLock.request('screen'); } catch (e) { /* optional */ }
+}
+
+// ---------- Input ----------
+const keys = {};
+const touch = { left: false, right: false, gas: false, brake: false };
+const KEYMAP = { gas: ['ArrowUp', 'KeyW', 'KeyZ'], brake: ['ArrowDown', 'KeyS', 'KeyX'], left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'] };
+const held = name => touch[name] || KEYMAP[name].some(k => keys[k]);
+
+function readInput() {
+    return { gas: held('gas'), brake: held('brake'), left: held('left'), right: held('right') };
+}
+
+addEventListener('keydown', e => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+    keys[e.code] = true;
+    Sound.init();
+    if (e.repeat) return;
+    if (e.code === 'Enter' || e.code === 'Space') {
+        if (g.state === 'title' || g.state === 'over') start();
+        else if (g.state === 'paused') resume();
+    } else if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
+    else if (e.code === 'KeyM') toggleMute();
+    else if (e.code === 'KeyF') toggleFull();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => {
+    for (const k in keys) keys[k] = false;
+    pause();
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+for (const b of document.querySelectorAll('[data-key]')) {
+    const k = b.dataset.key;
+    const on = e => {
+        e.preventDefault();
+        touch[k] = true;
+        b.classList.add('on');
+        Sound.init();
+        if (k === 'gas' && (g.state === 'title' || g.state === 'over')) start();
+        if (g.state === 'paused') resume();
+    };
+    const off = () => {
+        touch[k] = false;
+        b.classList.remove('on');
+    };
+    b.addEventListener('pointerdown', on);
+    b.addEventListener('pointerup', off);
+    b.addEventListener('pointercancel', off);
+    b.addEventListener('pointerleave', off);
+    b.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+$('btn-start').addEventListener('click', start);
+$('btn-again').addEventListener('click', start);
+$('btn-resume').addEventListener('click', resume);
+$('btn-pause').addEventListener('click', togglePause);
+$('btn-sound').addEventListener('click', () => { Sound.init(); toggleMute(); });
+$('btn-full').addEventListener('click', toggleFull);
+
+// ---------- Main loop ----------
+const STEP = 1 / 120;
+let lastT = 0, acc = 0;
+
+function frame(now) {
+    const dt = Math.min(0.1, (now - lastT) / 1000);
+    lastT = now;
+    if (g.state !== 'paused') {
+        acc += dt;
+        while (acc >= STEP) {
+            update(STEP);
+            acc -= STEP;
+        }
+    }
+    const ph = phaseAt(Math.min(g.dayT, DAY_LEN - 0.001));
+    const b = clamp((ph.p - 0.7) / 0.3, 0, 1);
+    Env.pal = blendPalette(PAL[TIMES[ph.i].pal], PAL[TIMES[(ph.i + 1) % TIMES.length].pal], b * b * (3 - 2 * b), Env);
+    renderGame(g);
+    drawHud(ph);
+    Sound.update();
+    requestAnimationFrame(frame);
+}
+
+function boot(data) {
+    g.best = (data && data.best) || loadBest();
+    if (data && data.muted) toggleMute();
+    initPalettes();
+    initSprites();
+    initBackground();
+    newRun(true);
+    renderBest();
+    showOverlay('title-ov');
+    requestAnimationFrame(t => {
+        lastT = t;
+        frame(t);
+    });
+}
+
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) hot.snapshot(() => ({ best: g.best, muted: g.muted }));
+if (hot && hot.ready) hot.ready(boot);
+else boot((hot && hot.data) || {});
+
+</script>
+</body>
+</html>
