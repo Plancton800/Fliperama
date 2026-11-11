@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&family=VT323&display=swap">
 <style>
-/* Layout: a night-time fliperama wall. Compact marquee header (logo left, pitch right), then four
-   cartridge cabinets with live attract-mode screens: 4 across on wide screens, 2 on tablets,
-   one column on phones. Playing opens the game full-screen inside the page with a back bar.
+/* Layout: a night-time fliperama wall. Compact marquee header (logo left, pitch right), then five
+   cartridge cabinets with live attract-mode screens: 3 + 2 centred on wide screens, 2 on tablets
+   (the odd one centred), one column on phones. Playing opens the game full-screen inside the page with a back bar.
    Single dark look by design, like the games themselves. */
 :root {
     --bg: #120f22;
@@ -39,6 +39,9 @@
     --raide-accent: #7cc4ff;
     --raide-deep: #1f4f9e;
     --raide-ink: #08162e;
+    --gel-accent: #8ff0e0;
+    --gel-deep: #1f8a8f;
+    --gel-ink: #062a2e;
     --display: "Press Start 2P", "Courier New", monospace;
     --body: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
     --data: "VT323", ui-monospace, "Courier New", monospace;
@@ -116,11 +119,13 @@ body.playing { overflow: hidden; }
 .lede { margin: 0; font-size: 19px; line-height: 1.4; text-wrap: pretty; }
 
 /* ---------- Cartridges ---------- */
-.shelf { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.shelf { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+.shelf > .cart { flex: 0 0 calc((100% - 40px) / 3); }
 .capivara { --accent: var(--cap-accent); --accent-deep: var(--cap-deep); --accent-ink: var(--cap-ink); }
 .ladrao { --accent: var(--thief-accent); --accent-deep: var(--thief-deep); --accent-ink: var(--thief-ink); }
 .racing { --accent: var(--race-accent); --accent-deep: var(--race-deep); --accent-ink: var(--race-ink); }
 .raide { --accent: var(--raide-accent); --accent-deep: var(--raide-deep); --accent-ink: var(--raide-ink); }
+.gelinho { --accent: var(--gel-accent); --accent-deep: var(--gel-deep); --accent-ink: var(--gel-ink); }
 .cart {
     display: grid;
     grid-template-rows: auto 1fr;
@@ -289,10 +294,10 @@ kbd {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1099px) {
-    .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .shelf > .cart { flex-basis: calc((100% - 20px) / 2); }
 }
 @media (max-width: 620px) {
-    .shelf { grid-template-columns: minmax(0, 1fr); }
+    .shelf > .cart { flex-basis: 100%; }
 }
 @media (max-width: 760px) {
     .marquee { grid-template-columns: minmax(0, 1fr); }
@@ -316,7 +321,7 @@ kbd {
         <h1 class="logo">FLIPERAMA<span>DE BOLSO</span></h1>
         <div class="side">
             <p class="eyebrow"><canvas id="coin" width="12" height="12" data-scene="coin" aria-hidden="true"></canvas><span class="blink">INSIRA A FICHA</span></p>
-            <p class="lede">Quatro jogos em pixel art com sotaque brasileiro. Rodam no navegador, no computador ou no celular, sem instalar nada.</p>
+            <p class="lede">Cinco jogos em pixel art com sotaque brasileiro. Rodam no navegador, no computador ou no celular, sem instalar nada.</p>
         </div>
     </header>
 
@@ -377,6 +382,21 @@ kbd {
                 <div class="foot">
                     <div class="record"><span class="lbl">SEU RECORDE</span><output id="rec-raide" class="none">SEM RECORDE AINDA</output></div>
                     <a class="play" href="raide-fighting.html" data-play="raide" data-name="Raide Fighting">JOGAR</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="cart gelinho">
+            <a class="screen" href="gelinho.html" data-play="gelinho" tabindex="-1" aria-hidden="true">
+                <span class="tube"><canvas width="192" height="120" data-scene="gelinho"></canvas></span>
+            </a>
+            <div class="info">
+                <p class="genre">SALTOS · MAR DE GELO</p>
+                <h2 class="name">GELINHO</h2>
+                <p class="pitch">Pule nos blocos de gelo para erguer o iglu e entre antes que a temperatura chegue a zero. Depois do oitavo cenário, tudo recomeça mais difícil.</p>
+                <div class="foot">
+                    <div class="record"><span class="lbl">SEU RECORDE</span><output id="rec-gelinho" class="none">SEM RECORDE AINDA</output></div>
+                    <a class="play" href="gelinho.html" data-play="gelinho" data-name="Gelinho">JOGAR</a>
                 </div>
             </div>
         </article>
@@ -505,7 +525,8 @@ const GLYPHS = {
     R: '110101110101101', M: '101111101101101', A: '010101111101101', G: '111100101101111',
     Z: '111001010100111', I: '111010010010111', N: '110101101101101',
     '0': '111101101101111', '1': '010110010010111', '2': '111001111100111', '3': '111001111001111',
-    '5': '111100111001111', '6': '111100111101111', '8': '111101111101111', '+': '000010111010000'
+    '5': '111100111001111', '6': '111100111101111', '8': '111101111101111', '+': '000010111010000',
+    '4': '101101111001001', '7': '111001001010010', '9': '111101111001111'
 };
 function tiny(g, str, x, y, col) {
     for (let i = 0; i < str.length; i++) {
@@ -1744,6 +1765,351 @@ function coinScene() {
     };
 }
 
+// ---------- Attract screen: Gelinho ----------
+function gelinhoScene() {
+    const W = 192, H = 120, HORIZON = 30, SHORE = 41, WATER = 46, ROWS = [SHORE, 64, 86, 108];
+    const CHUNK = 16, WRAP = W + 84, IG_X = 152, DOOR = IG_X + 15, JUMP_T = 0.42, FULL = 16;
+    const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
+    // The game's eight scenarios: each finished igloo moves the preview to the next one
+    const THEMES = [
+        { sky: ['#1f2a6b', '#5b4c9a', '#c46a9a', '#ff9e8a', '#ffd3a3'], cel: [150, 26, 6, '#fff4d6', '#ffb48a'], mtn: ['#3f3f86', '#5f62ad'], cap: '#f6e6ff', snow: ['#b7a3cf', '#fff4f4'], cliff: ['#d8ecff', '#4e6fae'], water: ['#5a6fb5', '#1a2a63'], shim: '#ffd6c8' },
+        { sky: ['#2a6fd6', '#4f98ec', '#8cc6f7', '#d6f0ff'], cel: [36, 11, 5, '#fffbe6', '#fff0a0'], mtn: ['#4f78a8', '#7ea4cf'], cap: '#ffffff', snow: ['#b5cfe6', '#ffffff'], cliff: ['#e9f7ff', '#5b93c6'], water: ['#3d8fd1', '#123a6b'], shim: '#e8f8ff' },
+        { sky: ['#3a2a6e', '#a6488a', '#f2705a', '#ffb35a', '#ffe39a'], cel: [96, 28, 8, '#fff3b0', '#ff8a4a'], mtn: ['#40285e', '#6a3c76'], cap: '#ffd8c8', snow: ['#b78aa6', '#ffe9d6'], cliff: ['#ffe0cc', '#8a5a8e'], water: ['#7a5aa0', '#22205a'], shim: '#ffcf8a' },
+        { sky: ['#050a1f', '#0b1a3d', '#13305a', '#1d4a6e'], cel: [168, 9, 4, '#eef4ff', '#6f8fc9'], stars: 40, aurora: ['#4dffb0', '#38c9ff'], mtn: ['#0e1a33', '#1a2f52'], cap: '#9fc0e6', snow: ['#4c6a9a', '#bcd6f0'], cliff: ['#a8d4f0', '#24467a'], water: ['#173a66', '#06142c'], shim: '#7dffcf' },
+        { sky: ['#5d6c80', '#8392a6', '#aab6c6', '#c9d2dc'], mtn: ['#76859a', '#95a3b6'], cap: '#eef3f8', snow: ['#a7b4c4', '#f4f7fa'], cliff: ['#eaf3fa', '#6a86a3'], water: ['#4d6680', '#1d2c3e'], shim: '#dfe9f2', flakes: 90 },
+        { sky: ['#060b24', '#121f4f', '#24387a', '#3b5596'], cel: [50, 13, 7, '#f4f1dc', '#8ea3e6'], stars: 50, mtn: ['#121c44', '#223468'], cap: '#c9d6ff', snow: ['#5d6eaa', '#d4defa'], cliff: ['#c4dcff', '#33508e'], water: ['#1f3570', '#0a1330'], shim: '#f4f1dc' },
+        { sky: ['#0f5c6e', '#2a95a6', '#7ed3cf', '#d4f5ea'], cel: [160, 9, 5, '#fbfff0', '#c6ffe6'], mtn: ['#2f8a96', '#5cc0c4'], cap: '#e9fffb', snow: ['#94c9c6', '#f6fffd'], cliff: ['#e6fffb', '#2f8f99'], water: ['#1f8a96', '#083b47'], shim: '#d9fff6' },
+        { sky: ['#12072b', '#3a1460', '#7a2f8a', '#c25a9a'], cel: [34, 9, 4, '#ffe9f6', '#d48ad8'], stars: 36, aurora: ['#ff6ad5', '#9a7bff'], mtn: ['#2a1244', '#47205f'], cap: '#f0c6ff', snow: ['#7f5aa6', '#f6dcff'], cliff: ['#f2d6ff', '#5e3a96'], water: ['#4a2a86', '#140a33'], shim: '#ffb8f0' }
+    ];
+    const GEL_PAL = {'a':'#1b1233','b':'#e8364f','c':'#ff97a4','d':'#f2732c','e':'#ffab5e','f':'#b8461c','g':'#f6faff','h':'#f9c9a0','i':'#b8c9e4','j':'#ff7b8c','k':'#e09a72','l':'#62a0f5','m':'#1d4a9c','n':'#2f6fd6','o':'#a51f36','p':'#6b3e26','q':'#9a603e','r':'#4e2c1b','s':'#2e170e','t':'#3f2216','u':'#2b2f55'};
+    const GEL = {
+        idle0: ['....aaa...........', '...abbbaaaaa......', '...abcbddddda.....', '...abbbeedddda....', '...afdeeggggdda...', '...afddgghhhgia...', '...afddghahhaga...', '...afddghahhaga...', '...afddghhhhhga...', '...affdgjhhhhja...', '....affdkkhgia....', '..aafllllllldda...', '.ammfnmnnnnndeda..', 'ammffdddddddddda..', '.anffddddfddddda..', '..aoffddddddbbba..', '..aooffddfddbbba..', '...aigigigigigia..', '....appppaqqqqa...', '....arrrrappppa...', '....asssssttttta..', '.....aaaaaaaaaa...'],
+        walk0: ['....aaa...........', '...abbbaaaaa......', '...abcbddddda.....', '...abbbeedddda....', '...afdeeggggdda...', '...afddgghhhgia...', '...afddghahhaga...', '...afddghahhaga...', '...afddghhhhhga...', '...affdgjhhhhja...', '....affdkkhgia....', '..aafllllllddla...', '.ammfnmnnnndeda...', 'ammffdddddddddfa..', '.anafddddfdddda...', '..aaffdddddbbba...', '...aoffddfdbbba...', '...aigigigigigia..', '..appppuaauqqqqa..', '..arrrra..appppa..', '..asssssa.attttta.', '...aaaaa...aaaaa..'],
+        walk2: ['....aaa...........', '...abbbaaaaa......', '...abcbddddda.....', '...abbbeedddda....', '...afdeeggggdda...', '...afddgghhhgia...', '...afddghahhaga...', '...afddghahhaga...', '...afddghhhhhga...', '...affdgjhhhhja...', '...aaffdkkhgiaa...', '..afflllllllldda..', '.ammfnmnnnnnndeda.', 'ammffddddddddddda.', '.anffddddfdddddda.', '.aooffdddddddbbba.', '.aoooffddfddfbbba.', '..aaigigigigigia..', '..aqqqquaauppppa..', '..appppa..arrrra..', '..attttta.asssssa.', '...aaaaa...aaaaa..'],
+        jump: ['...abbbaaaaa......', '...abcbddddda.....', '...abbbeedddda....', '...afdeeggggdda...', '...afddgghhhgiba..', '..aofddghahhabbba.', '..aofddghahhabbba.', '...afddghhhhddda..', '...affdgjhhhddda..', '...afffdkkhgddda..', '...afllllllllda...', '...afnmnnnnnnna...', '..affdddddddddfa..', '.ammfddddfdddda...', 'ammmffdddddddfa...', '.anaaffddfddfaa...', '..aaigigigigigia..', '....aassssppppa...', '.....auuaattttta..', '......aa..aaaaa...', '..................', '..................'],
+        fall: ['....aaa...........', '...abbbaaaaa......', '...abcbddddda.....', '...abbbeedddda....', '...afdeeggggdda...', '...afddgghhhgiba..', '..aofddghahhabbba.', '..aofddghhhhhbbba.', '...afddghhhhddda..', '...affdgjhaaddda..', '...afffdkkhgddda..', '..aafllllllllda...', '.ammfnmnnnnnnna...', 'ammffdddddddddfa..', '.anafddddfdddda...', '..aaffdddddddfa...', '....affddfddfaa...', '...aigigigigigia..', '....appppaqqqqa...', '....arrrrappppa...', '....asssssttttta..', '.....aaaaaaaaaa...'],
+    };
+    const FR = {};
+    for (const k in GEL) {
+        const c = pmap(GEL[k], GEL_PAL);
+        FR[k] = [c, flip(c)];
+    }
+    const tri = t => { const f = ((t / (Math.PI * 2)) % 1 + 1) % 1; return 1 - Math.abs(f * 2 - 1); };
+    function gradAt(stops, t) {
+        const s = clamp(t, 0, 1) * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(s));
+        return mix(rgb(stops[i]), rgb(stops[i + 1]), s - i);
+    }
+    // Dithered vertical gradient, like the game's skies and water
+    function band(g, y0, y1, stops, levels) {
+        const n = (stops.length - 1) * levels;
+        for (let y = y0; y < y1; y++) {
+            const v = (y - y0) / Math.max(1, y1 - y0 - 1) * n, base = Math.floor(v), f = v - base;
+            const a = css(gradAt(stops, base / n)), b = css(gradAt(stops, Math.min(n, base + 1) / n));
+            for (let x = 0; x < W; x++) { px(g, x, y, 1, 1, f > BAYER[(y & 3) * 4 + (x & 3)] ? b : a); }
+        }
+    }
+    function disc(g, cx, cy, r, col) {
+        for (let y = Math.floor(cy - r); y <= cy + r; y++) {
+            for (let x = Math.floor(cx - r); x <= cx + r; x++) {
+                const dx = x + 0.5 - cx, dy = y + 0.5 - cy;
+                if (dx * dx + dy * dy <= r * r) { px(g, x, y, 1, 1, col); }
+            }
+        }
+    }
+
+    let th, sky, ground, stars = [], flakes = [], shim = [], themeI = 0;
+    function build(i) {
+        th = THEMES[i];
+        const R = seeded(i * 97 + 13);
+        let g;
+        [sky, g] = mk(W, HORIZON + 2);
+        band(g, 0, HORIZON + 2, th.sky, 5);
+        if (th.cel) {
+            const [cx, cy, r, col, glow] = th.cel;
+            for (let k = 4; k >= 1; k--) { disc(g, cx, cy, r + k * 3, css(rgb(glow), 0.12)); }
+            disc(g, cx, cy, r, col);
+        }
+        [ground, g] = mk(W, H);
+        const p0 = R() * 6.28, p1 = R() * 6.28, p2 = R() * 6.28, hs = [], ridge = [];
+        for (let x = -1; x <= W; x++) { hs.push(17 * (0.5 * tri(x * 0.02 + p0) + 0.32 * tri(x * 0.05 + p1) + 0.18 * tri(x * 0.12 + p2))); }
+        for (let x = 0; x < W; x++) {
+            const h = hs[x + 1], top = Math.round(HORIZON - h), lit = hs[x + 2] - hs[x] < 0, capD = Math.max(0, (h - 9) * 0.9);
+            ridge[x] = top;
+            for (let y = top; y < HORIZON; y++) {
+                const snowy = y - top < capD + (BAYER[(y & 3) * 4 + (x & 3)] - 0.5) * 2;
+                px(g, x, y, 1, 1, snowy ? (lit ? th.cap : shade(th.cap, -0.25)) : th.mtn[lit ? 1 : 0]);
+            }
+        }
+        band(g, HORIZON, SHORE + 1, th.snow, 5);
+        for (let i = 0; i < 8; i++) { px(g, Math.floor(R() * W), HORIZON + 2 + Math.floor(R() * 8), 5 + Math.floor(R() * 10), 1, 'rgba(255,255,255,0.35)'); }
+        px(g, 0, SHORE, W, 1, th.snow[1]);
+        band(g, SHORE + 1, WATER + 1, th.cliff, 2);
+        for (let x = 0; x < W; x++) {
+            if (R() < 0.2) { px(g, x, SHORE + 2, 1, WATER - SHORE - 1, css(rgb(th.cliff[1]), 0.5)); }
+            if (R() < 0.1) { px(g, x, WATER + 1, 1, 1 + Math.floor(R() * 3), th.cliff[0]); }
+        }
+        band(g, WATER + 1, H, th.water, 6);
+        px(g, 0, WATER + 1, W, 3, 'rgba(0,0,20,0.25)');
+        for (let i = 0; i < 60; i++) { px(g, Math.floor(R() * W), WATER + 4 + Math.floor(R() * (H - WATER - 4)), 2 + Math.floor(R() * 5), 1, css(rgb(th.water[0]), 0.4)); }
+        stars = [];
+        for (let i = 0; i < (th.stars || 0); i++) {
+            const x = Math.floor(R() * W), y = Math.floor(R() * (HORIZON - 4));
+            if (y < ridge[x] - 2) { stars.push({ x, y, ph: R() * 6.28 }); }
+        }
+        flakes = [];
+        for (let i = 0; i < (th.flakes || 0); i++) { flakes.push({ x: R() * W, y: R() * H, v: 12 + R() * 18 }); }
+        shim = [];
+        for (let i = 0; i < 24; i++) { shim.push({ x: R() * W, y: WATER + 4 + Math.floor(R() * (H - WATER - 6)), len: 2 + Math.floor(R() * 4), v: 3 + R() * 4, ph: R() * 6.28 }); }
+    }
+
+    // Igloo: 15 bricks (5-4-3-2-1) and then the door
+    const BLOCKS = [];
+    [[0, 6, 12, 18, 24], [3, 9, 15, 21], [6, 12, 18], [9, 15], [12]].forEach((xs, k) => xs.forEach(x => BLOCKS.push({ x: IG_X + x, y: SHORE - 4 * (k + 1) })));
+    const rows = [0, 1, 2, 3].map(r => (r ? { y: ROWS[r], dir: r % 2 ? 1 : -1, v: [0, 11, 14, 9][r], off: rr(0, WRAP), visited: false } : null));
+    const centre = (R, gi) => ((R.off + gi * WRAP / 2 + 40) % WRAP + WRAP) % WRAP - 40;
+    const chunkX = (R, gi, k) => centre(R, gi) + k * (CHUNK + 2);
+    function under(R, x, ahead) {
+        for (let gi = 0; gi < 2; gi++) {
+            for (let k = -1; k <= 1; k++) {
+                const c = chunkX(R, gi, k) + R.dir * R.v * ahead;
+                if (Math.abs(x - c) <= CHUNK / 2 + 1) { return { gi, k, c }; }
+            }
+        }
+        return null;
+    }
+    function nearest(R, x, ahead) {
+        let best = null;
+        for (let gi = 0; gi < 2; gi++) {
+            for (let k = -1; k <= 1; k++) {
+                const c = chunkX(R, gi, k) + R.dir * R.v * ahead;
+                if (c > 14 && c < 136 && (best === null || Math.abs(c - x) < Math.abs(best - x))) { best = c; }
+            }
+        }
+        return best;
+    }
+
+    const p = { x: 40, y: SHORE, row: 0, state: 'stand', face: 1, jt: 0, to: 0, y0: 0, y1: 0, on: null, wait: 0.6, walk: 0, sweep: 1, sinkY: 0, timer: 0 };
+    const parts = [], pops = [];
+    let blocks = 0, temp = 45, time = 0, inside = false, insideT = 0;
+
+    function respawn() {
+        Object.assign(p, { x: 30, y: SHORE, row: 0, state: 'stand', face: 1, on: null, wait: 0.8, walk: 0, sweep: 1 });
+        temp = 45;
+    }
+    function burst(x, y, n, cols, spd) {
+        for (let i = 0; i < n; i++) {
+            const a = rr(0, Math.PI * 2), s = rr(spd * 0.3, spd);
+            parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - spd * 0.5, life: rr(0.3, 0.8), col: pick(cols) });
+        }
+    }
+    function jump(to) {
+        p.state = 'jump'; p.jt = 0; p.to = to; p.y0 = ROWS[p.row]; p.y1 = ROWS[to]; p.on = null;
+        p.wait = rr(0.15, 0.7);
+    }
+    function land() {
+        p.row = p.to; p.y = ROWS[p.row]; p.state = 'stand';
+        if (p.row === 0) { return; }
+        const R = rows[p.row], c = under(R, p.x, 0);
+        if (!c) {
+            p.state = 'sink'; p.sinkY = p.y + 5; p.timer = 1.3;
+            burst(p.x, p.sinkY, 16, ['#ffffff', '#cfeeff', '#8fd0ff'], 70);
+            return;
+        }
+        p.on = c;
+        if (!R.visited && blocks < FULL) {
+            R.visited = true;
+            blocks++;
+            pops.push({ x: p.x, y: p.y - 28, life: 0.9 });
+            const b = BLOCKS[Math.min(blocks, 15) - 1];
+            burst(b.x + 3, b.y + 2, 6, ['#ffffff', '#bfe9ff', '#fff3a0'], 30);
+            if (blocks < FULL && rows[1].visited && rows[2].visited && rows[3].visited) { rows.forEach(r => { if (r) { r.visited = false; } }); }
+        }
+    }
+    // The demo player: sweeps the rows to lay bricks, then heads home to the igloo
+    function think(dt) {
+        p.wait -= dt;
+        const done = blocks >= FULL;
+        if (p.row === 0 && done) {
+            const d = DOOR - p.x;
+            p.face = Math.sign(d) || 1;
+            p.x += clamp(d, -30 * dt, 30 * dt);
+            p.walk += dt * 8;
+            if (Math.abs(d) < 0.8) { inside = true; insideT = 2.2; burst(DOOR, SHORE - 6, 14, ['#fff3a0', '#ffffff'], 40); }
+            return;
+        }
+        if (p.row === 3) { p.sweep = -1; }
+        if (p.row === 1 && p.sweep < 0) { p.sweep = 1; }
+        const target = done ? p.row - 1 : (p.row === 0 ? 1 : p.row + p.sweep);
+        const safe = to => to === 0 || (to <= 3 && !!under(rows[to], p.x, JUMP_T));
+        const edge = p.row > 0 && (p.x < 12 || p.x > W - 12);
+        if (p.wait <= 0 && (safe(target) || edge)) {
+            const other = p.row * 2 - target;
+            jump(!safe(target) && other >= 0 && other <= 3 && safe(other) ? other : target);
+            return;
+        }
+        let goal = p.x;
+        if (p.row > 0) {
+            const c = under(rows[p.row], p.x, 0);
+            if (c) { goal = c.c; }
+        } else {
+            const n = nearest(rows[1], p.x, JUMP_T + 0.6);
+            if (n !== null) { goal = n; }
+        }
+        const d = goal - p.x;
+        if (Math.abs(d) > 1) {
+            p.x += clamp(d, -24 * dt, 24 * dt);
+            p.face = Math.sign(d);
+            p.walk += dt * 8;
+        } else {
+            p.walk = 0;
+        }
+    }
+
+    function update(dt) {
+        time += dt;
+        for (let r = 1; r <= 3; r++) { rows[r].off += rows[r].dir * rows[r].v * dt; }
+        if (inside) {
+            insideT -= dt;
+            temp = Math.max(0, temp - dt * 40);
+            if (insideT <= 0) {
+                inside = false;
+                themeI = (themeI + 1) % THEMES.length;
+                build(themeI);
+                blocks = 0;
+                rows.forEach(r => { if (r) { r.visited = false; } });
+                respawn();
+            }
+        } else if (p.state === 'stand') {
+            if (p.row > 0) {
+                const R = rows[p.row];
+                p.x = clamp(p.x + R.dir * R.v * dt, 6, W - 6);
+                if (!under(R, p.x, 0)) {
+                    p.state = 'sink'; p.sinkY = p.y + 5; p.timer = 1.3;
+                    burst(p.x, p.sinkY, 16, ['#ffffff', '#cfeeff', '#8fd0ff'], 70);
+                }
+            }
+            if (p.state === 'stand') { think(dt); }
+        } else if (p.state === 'jump') {
+            p.jt += dt;
+            const k = Math.min(1, p.jt / JUMP_T);
+            p.y = lerp(p.y0, p.y1, smooth(k)) - (p.y1 < p.y0 ? 12 : 7) * 4 * k * (1 - k);
+            if (k >= 1) { land(); }
+        } else {
+            p.timer -= dt;
+            if (p.state === 'sink') { p.y += 12 * dt; }
+            if (p.timer <= 0) { respawn(); }
+        }
+        if (!inside && p.state !== 'sink' && p.state !== 'frozen') {
+            temp -= dt;
+            if (temp <= 0) { temp = 0; p.state = 'frozen'; p.timer = 1.4; burst(p.x, p.y - 10, 12, ['#e6f8ff', '#8fd3ff'], 30); }
+        }
+        for (const q of parts) { q.vy += 200 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; }
+        prune(parts);
+        for (const q of pops) { q.y -= 16 * dt; q.life -= dt; }
+        prune(pops);
+        for (const f of flakes) {
+            f.y += f.v * dt; f.x += 24 * dt;
+            if (f.y > H) { f.y = -1; f.x = rr(0, W); }
+            if (f.x > W) { f.x -= W; }
+        }
+    }
+
+    function drawChunk(g, cx, y, vis) {
+        const c = vis ? ['#132c5c', '#c8ecff', '#8fcfff', '#62aef0', '#3d8ad8', '#2b64b2'] : ['#1e3a63', '#ffffff', '#e9f6ff', '#c4e2f5', '#9ccbe8', '#6ea6cf'];
+        const x = Math.round(cx - CHUNK / 2);
+        y -= 1;
+        px(g, x + 1, y - 1, CHUNK - 2, 1, c[0]);
+        px(g, x, y, 1, 6, c[0]);
+        px(g, x + CHUNK - 1, y, 1, 6, c[0]);
+        px(g, x + 1, y, CHUNK - 2, 1, c[1]);
+        px(g, x + 1, y + 1, CHUNK - 2, 2, c[2]);
+        px(g, x + 1, y + 3, CHUNK - 2, 1, c[3]);
+        px(g, x + 1, y + 4, CHUNK - 2, 1, c[4]);
+        px(g, x + 1, y + 5, CHUNK - 2, 1, c[5]);
+        px(g, x + 1, y + 6, CHUNK - 2, 1, c[0]);
+        px(g, x + 2, y + 7, CHUNK - 4, 2, 'rgba(40,90,160,0.35)');
+    }
+    function drawGel(g) {
+        if (inside) { return; }
+        let key = 'idle0';
+        if (p.state === 'jump') { key = 'jump'; }
+        else if (p.state === 'sink' || p.state === 'frozen') { key = 'fall'; }
+        else if (p.walk > 0) { key = Math.floor(p.walk) % 2 ? 'walk2' : 'walk0'; }
+        const img = FR[key][p.face >= 0 ? 0 : 1], x = Math.round(p.x) - 9, y = Math.round(p.y) - 21;
+        if (p.state === 'sink') {
+            g.save();
+            g.beginPath();
+            g.rect(0, 0, W, Math.round(p.sinkY));
+            g.clip();
+            g.drawImage(img, x, y);
+            g.restore();
+            return;
+        }
+        g.drawImage(img, x, y);
+        if (p.state === 'frozen') { px(g, x + 1, y + 1, 16, 21, 'rgba(190,233,255,0.45)'); }
+    }
+    function drawIgloo(g) {
+        for (let i = 0; i < 15; i++) {
+            const b = BLOCKS[i];
+            if (i < Math.min(blocks, 15)) {
+                px(g, b.x, b.y, 5, 3, '#e8f6ff');
+                px(g, b.x, b.y, 5, 1, '#ffffff');
+                px(g, b.x + 5, b.y, 1, 4, '#5a86b4');
+                px(g, b.x, b.y + 3, 6, 1, '#5a86b4');
+            } else {
+                px(g, b.x, b.y, 5, 3, 'rgba(255,255,255,0.14)');
+            }
+        }
+        if (blocks >= FULL) {
+            px(g, DOOR - 3, SHORE - 7, 7, 7, '#5a86b4');
+            px(g, DOOR - 2, SHORE - 6, 5, 6, '#18213d');
+            px(g, DOOR - 1, SHORE - 3, 3, 3, inside ? '#ffb35a' : '#2b3a66');
+        }
+    }
+    function draw(g) {
+        g.drawImage(sky, 0, 0);
+        for (const s of stars) { px(g, s.x, s.y, 1, 1, css([255, 255, 255], 0.35 + 0.6 * Math.abs(Math.sin(time * 1.8 + s.ph)))); }
+        if (th.aurora) {
+            for (let x = 0; x < W; x += 2) {
+                const inten = 0.5 + 0.5 * Math.sin(x * 0.03 + time * 0.4), base = 17 + Math.sin(x * 0.04 + time * 0.7) * 4;
+                const col = mix(rgb(th.aurora[0]), rgb(th.aurora[1]), 0.5 + 0.5 * Math.sin(x * 0.02 - time * 0.3));
+                for (let k = 0; k < 4; k++) { px(g, x, base - 12 + k * 3, 2, 3, css(col, inten * 0.2 * (k + 1) / 4)); }
+            }
+        }
+        g.drawImage(ground, 0, 0);
+        drawIgloo(g);
+        if (p.row === 0 && p.state !== 'jump') { drawGel(g); }
+        for (const s of shim) {
+            const a = 0.15 + 0.2 * Math.sin(time * 2 + s.ph);
+            if (a > 0.05) { px(g, Math.floor((s.x + time * s.v) % W), s.y, s.len, 1, css(rgb(th.shim), a)); }
+        }
+        for (let r = 1; r <= 3; r++) {
+            const R = rows[r];
+            for (let gi = 0; gi < 2; gi++) {
+                for (let k = -1; k <= 1; k++) {
+                    const cx = chunkX(R, gi, k);
+                    if (cx > -12 && cx < W + 12) { drawChunk(g, cx, R.y, R.visited); }
+                }
+            }
+            if (p.row === r && p.state !== 'jump') { drawGel(g); }
+        }
+        if (p.state === 'jump') { drawGel(g); }
+        for (const q of parts) { px(g, q.x, q.y, 1, 1, q.col); }
+        for (const q of pops) { tiny(g, '+10', q.x - 5, q.y, '#fff3a0'); }
+        for (const f of flakes) { px(g, f.x, f.y, 1, 1, 'rgba(255,255,255,0.85)'); }
+        // thermometer: the degrees left before Gelinho freezes
+        const lv = Math.round(clamp(temp / 45, 0, 1) * 6);
+        px(g, 3, 2, 5, 12, '#0b1022');
+        px(g, 4, 3, 3, 7, '#e8f6ff');
+        px(g, 5, 9 - lv, 1, lv, '#e8364f');
+        px(g, 3, 9, 5, 4, '#e8364f');
+        tiny(g, String(Math.ceil(temp)), 10, 5, temp > 10 ? '#ffffff' : '#ff8a8a');
+    }
+
+    build(0);
+    return { update, draw };
+}
+
 // ---------- Preview loop: only visible screens animate, and none while a game is open ----------
 const Previews = (() => {
     const items = [];
@@ -1804,7 +2170,8 @@ const RECORDS = {
         const best = readJson('estrada-sem-fim:best');
         return best && typeof best.day === 'number' ? `DIA ${best.day} · ${best.cars} CARROS` : null;
     },
-    raide: () => { const n = parseInt(read('raideFluvial.hi') || '0', 10) || 0; return n > 0 ? pad6(n) : null; }
+    raide: () => { const n = parseInt(read('raideFluvial.hi') || '0', 10) || 0; return n > 0 ? pad6(n) : null; },
+    gelinho: () => { const n = parseInt(read('gelinho.hi') || '0', 10) || 0; return n > 0 ? pad6(n) : null; }
 };
 function showRecords() {
     for (const id in RECORDS) {
@@ -1916,7 +2283,7 @@ addEventListener('focus', showRecords);
 
 // ---------- Boot ----------
 showRecords();
-const SCENES = { coin: coinScene, capivara: capivaraScene, 'pega-ladrao': ladraoScene, 'radical-racing': racingScene, raide: raideScene };
+const SCENES = { coin: coinScene, capivara: capivaraScene, 'pega-ladrao': ladraoScene, 'radical-racing': racingScene, raide: raideScene, gelinho: gelinhoScene };
 for (const c of document.querySelectorAll('canvas[data-scene]')) {
     try { Previews.add(c, SCENES[c.dataset.scene]); } catch (err) { console.error(err); }
 }

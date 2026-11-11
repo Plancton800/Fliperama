@@ -1,7 +1,7 @@
 // Fliperama de Bolso service worker: keeps the launcher, the games and their fonts on the phone,
 // so the installed app opens without internet. Change VERSION whenever a game is added or removed.
 'use strict';
-const VERSION = 'fliperama-v1';
+const VERSION = 'fliperama-v2';
 const FILES = [
     './',
     'index.html',
@@ -9,6 +9,7 @@ const FILES = [
     'pega-ladrao.html',
     'radical-racing-gt.html',
     'raide-fighting.html',
+    'gelinho.html',
     'manifest.webmanifest',
     'icon-192.png',
     'icon-512.png'
